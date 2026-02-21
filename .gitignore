@@ -17,7 +17,7 @@ Makefile
 *.pdb
 *.lib
 *.ilk
-
+.ngkssys/
 # -------------------------
 # Runtime artifacts
 # -------------------------

@@ -1,0 +1,62 @@
+# =========================
+# NGKsMailcpp .gitignore
+# =========================
+
+# -------------------------
+# Build output (CMake / Qt)
+# -------------------------
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.obj
+*.o
+*.exe
+*.dll
+*.pdb
+*.lib
+*.ilk
+
+# -------------------------
+# Runtime artifacts
+# -------------------------
+artifacts/
+_artifacts/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# -------------------------
+# OAuth / Secrets
+# -------------------------
+oauth_client.json
+oauth_client.json.json
+*.secret
+.env
+
+# -------------------------
+# Local config
+# -------------------------
+*.local
+config.local.json
+
+# -------------------------
+# IDE / Editor
+# -------------------------
+.vscode/
+.idea/
+*.user
+*.suo
+
+# -------------------------
+# OS junk
+# -------------------------
+Thumbs.db
+.DS_Store
+
+# -------------------------
+# Test transcripts / IMAP logs
+# -------------------------
+artifacts/logs/

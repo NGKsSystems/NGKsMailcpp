@@ -60,3 +60,16 @@ Thumbs.db
 # Test transcripts / IMAP logs
 # -------------------------
 artifacts/logs/_proof/
+
+Add-Content .gitignore @"
+
+# local databases
+artifacts/db/*.db
+artifacts/db/ngksmail*
+
+# local dev env (secrets)
+tools/dev/env.local.ps1
+
+# local proof
+_proof/
+"@

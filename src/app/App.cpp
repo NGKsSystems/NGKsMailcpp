@@ -1,3 +1,4 @@
+// src/app/App.cpp
 #include "app/App.h"
 
 #include <QApplication>
@@ -406,8 +407,31 @@ int App::Run(int argc, char* argv[])
             return 70;
         }
 
-        const QString clientId = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_ID")).trimmed();
-        const QString clientSecret = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_SECRET")).trimmed();
+        // Prefer ENV; if empty, fall back to DB-stored provider creds.
+        QString clientId = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_ID")).trimmed();
+        QString clientSecret = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_SECRET")).trimmed();
+        QString credsSource = "env";
+
+        if (clientId.isEmpty() || clientSecret.isEmpty()) {
+            QString dbClientId;
+            QString dbClientSecret;
+            QString dbCredsErr;
+            const bool credsFound = ngks::core::auth::OAuthStore::GetProviderClientCredentials(
+                db, "gmail", dbClientId, dbClientSecret, dbCredsErr);
+            if (credsFound) {
+                if (clientId.isEmpty()) clientId = dbClientId;
+                if (clientSecret.isEmpty()) clientSecret = dbClientSecret;
+                credsSource = "db";
+                ngks::core::logging::AuditLog::Event(
+                    "OAUTH_CREDS_FALLBACK",
+                    QString("{\"provider\":\"gmail\",\"source\":\"db\"}").toStdString());
+            } else if (!dbCredsErr.isEmpty()) {
+                ngks::core::logging::AuditLog::Event(
+                    "OAUTH_CREDS_FAIL",
+                    QString("{\"provider\":\"gmail\",\"reason\":\"%1\"}").arg(JsonEscape(dbCredsErr)).toStdString());
+            }
+        }
+
         if (clientId.isEmpty()) {
             ngks::core::logging::AuditLog::Event("OAUTH_CONNECT_FAIL", "{\"reason\":\"missing-client-id\"}");
             WriteOAuthConnectProof("FAIL", RedactUsername(email), "missing-client-id", "", CountOAuthRows(db));
@@ -422,8 +446,8 @@ int App::Run(int argc, char* argv[])
         const QString emailMasked = RedactUsername(email);
         ngks::core::logging::AuditLog::Event(
             "OAUTH_CONNECT_START",
-            QString("{\"provider\":\"gmail\",\"email\":\"%1\"}")
-                .arg(JsonEscape(emailMasked))
+            QString("{\"provider\":\"gmail\",\"email\":\"%1\",\"creds_source\":\"%2\"}")
+                .arg(JsonEscape(emailMasked), JsonEscape(credsSource))
                 .toStdString());
 
         ngks::core::oauth::OAuthConfig cfg;
@@ -465,6 +489,8 @@ int App::Run(int argc, char* argv[])
         tokenRec.refreshToken = oauthResult.refreshToken;
         tokenRec.accessToken = oauthResult.accessToken;
         tokenRec.expiresAtUtc = oauthResult.expiresAtUtc;
+        tokenRec.clientId = clientId;
+        tokenRec.clientSecret = clientSecret;
 
         QString storeError;
         if (!ngks::core::auth::OAuthStore::UpsertToken(db, tokenRec, storeError)) {
@@ -552,16 +578,55 @@ int App::Run(int argc, char* argv[])
 
                 ngks::core::logging::AuditLog::Event("OAUTH_REFRESH_START", "{\"provider\":\"gmail\"}");
 
+                // Prefer ENV; if empty, fall back to DB provider creds.
+                QString clientId = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_ID")).trimmed();
+                QString clientSecret = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_SECRET")).trimmed();
+                QString credsSource = "env";
+
+                if (clientId.isEmpty() || clientSecret.isEmpty()) {
+                    QString dbClientId;
+                    QString dbClientSecret;
+                    QString dbCredsErr;
+                    const bool credsFound = ngks::core::auth::OAuthStore::GetProviderClientCredentials(
+                        db, "gmail", dbClientId, dbClientSecret, dbCredsErr);
+                    if (credsFound) {
+                        if (clientId.isEmpty()) clientId = dbClientId;
+                        if (clientSecret.isEmpty()) clientSecret = dbClientSecret;
+                        credsSource = "db";
+                        ngks::core::logging::AuditLog::Event(
+                            "OAUTH_CREDS_FALLBACK",
+                            QString("{\"provider\":\"gmail\",\"source\":\"db\"}").toStdString());
+                    } else if (!dbCredsErr.isEmpty()) {
+                        ngks::core::logging::AuditLog::Event(
+                            "OAUTH_CREDS_FAIL",
+                            QString("{\"provider\":\"gmail\",\"reason\":\"%1\"}").arg(JsonEscape(dbCredsErr)).toStdString());
+                    }
+                }
+
+                if (clientId.isEmpty()) {
+                    ngks::core::logging::AuditLog::Event("OAUTH_REFRESH_FAIL", "{\"reason\":\"missing-client-id\"}");
+                    return 25;
+                }
+                if (clientSecret.isEmpty()) {
+                    ngks::core::logging::AuditLog::Event("OAUTH_REFRESH_FAIL", "{\"reason\":\"missing-client-secret\"}");
+                    return 25;
+                }
+
                 ngks::core::oauth::OAuthConfig cfg;
                 cfg.provider = "gmail";
                 cfg.email = effectiveEmail;
-                cfg.clientId = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_ID"));
-                cfg.clientSecret = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_SECRET"));
+                cfg.clientId = clientId;
+                cfg.clientSecret = clientSecret;
                 cfg.authEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
                 cfg.tokenEndpoint = "https://oauth2.googleapis.com/token";
                 cfg.scope = "https://mail.google.com/";
                 cfg.listenPort = 0;
                 cfg.timeoutSeconds = 60;
+
+                // Optional trace: show where creds came from (no secrets logged).
+                ngks::core::logging::AuditLog::Event(
+                    "OAUTH_REFRESH_CFG",
+                    QString("{\"provider\":\"gmail\",\"creds_source\":\"%1\"}").arg(JsonEscape(credsSource)).toStdString());
 
                 ngks::core::oauth::OAuthResult oauthResult;
                 QString refreshError;

@@ -498,7 +498,7 @@ int App::Run(int argc, char* argv[])
         bool useXoauth2 = false;
         QString oauthAccessToken;
 
-        if (effectiveEmail.isEmpty() || host.isEmpty() || username.isEmpty()) {
+        if (effectiveEmail.isEmpty() || host.isEmpty()) {
             ngks::core::logging::AuditLog::Event("RESOLVE_FAIL", "{\"reason\":\"missing-args\"}");
             return 20;
         }

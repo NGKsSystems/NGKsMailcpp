@@ -59,4 +59,4 @@ Thumbs.db
 # -------------------------
 # Test transcripts / IMAP logs
 # -------------------------
-artifacts/logs/
+artifacts/logs/_proof/

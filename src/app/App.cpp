@@ -12,6 +12,8 @@
 #include <QTextStream>
 #include <QTimer>
 
+#include <iostream>
+
 #include "core/auth/OAuthStore.h"
 #include "core/logging/AuditLog.h"
 #include "core/mail/providers/imap/FolderMirrorService.h"
@@ -20,6 +22,8 @@
 #include "core/storage/Db.h"
 #include "core/storage/Schema.h"
 #include "platform/common/Paths.h"
+#include "providers/core/ProviderRegistry.hpp"
+#include "providers/yahoo/YahooProfile.hpp"
 #include "ui/MainWindow.h"
 
 namespace ngks::app {
@@ -50,25 +54,6 @@ bool IsLocalhostHost(const QString& host)
 {
     const QString lowered = host.trimmed().toLower();
     return lowered == "localhost" || lowered == "127.0.0.1" || lowered == "::1";
-}
-
-bool IsGmailImapHost(const QString& host)
-{
-    return host.trimmed().compare("imap.gmail.com", Qt::CaseInsensitive) == 0;
-}
-
-QString OAuthUserFacingMessage(const QString& reason)
-{
-    const QString lowered = reason.toLower();
-    if (lowered.contains("app_not_verified")
-        || lowered.contains("access blocked")
-        || lowered.contains("not verified")
-        || lowered.contains("test user")
-        || lowered.contains("access_denied")
-        || lowered.contains("invalid_request")) {
-        return "OAuth app is in Testing; only listed Test Users can authorize. Contact admin or wait for Production publish.";
-    }
-    return "";
 }
 
 struct Xoauth2FailMeta {
@@ -357,6 +342,12 @@ int App::Run(int argc, char* argv[])
 
     const QCommandLineOption resolveOpt("resolve-test", "Run IMAP account resolve + mirror and exit.");
     const QCommandLineOption oauthConnectOpt("oauth-connect", "Run Gmail OAuth connect flow and store refresh token.");
+    const QCommandLineOption gmailOauthConnectOpt("gmail-oauth-connect", "Run Gmail OAuth connect flow via provider-owned driver.");
+    const QCommandLineOption msOauthConnectOpt("ms-oauth-connect", "Run Microsoft OAuth connect flow via provider-owned driver.");
+    const QCommandLineOption icloudConnectOpt("icloud-connect", "Run iCloud app-password connect flow via provider-owned driver.");
+    const QCommandLineOption yahooConnectOpt("yahoo-connect", "Run Yahoo app-password connect flow via provider-owned driver.");
+    const QCommandLineOption genericImapConnectOpt("generic-imap-connect", "Run Generic IMAP connect flow via provider-owned driver.");
+    const QCommandLineOption genericImapConnectInteractiveOpt("generic-imap-connect-interactive", "Run Generic IMAP connect with interactive terminal prompts.");
     const QCommandLineOption emailOpt("email", "Account email", "email");
     const QCommandLineOption hostOpt("host", "IMAP host", "host");
     const QCommandLineOption portOpt("port", "IMAP port", "port", "993");
@@ -366,10 +357,18 @@ int App::Run(int argc, char* argv[])
     const QCommandLineOption allowLocalhostOpt("allow-localhost", "Allow localhost/loopback target in resolve-test mode.");
     const QCommandLineOption dbDumpFoldersOpt("db-dump-folders", "Dump folders table to artifacts/_proof/29_db_dump_folders.txt and exit.");
     const QCommandLineOption dbDumpOAuthOpt("db-dump-oauth", "Dump oauth_tokens table to artifacts/_proof/30_db_dump_oauth.txt and exit.");
+    const QCommandLineOption auditSelftestOpt("audit-selftest", "Emit provider-tagged audit events (gmail/ms_graph) and exit.");
+    const QCommandLineOption oauthHttpsSelftestOpt("oauth-https-selftest", "Run OAuth HTTPS loopback listener selftest (Yahoo scaffold) and exit.");
     const QCommandLineOption limitOpt("limit", "Limit for --db-dump-folders rows.", "limit", "200");
 
     parser.addOption(resolveOpt);
     parser.addOption(oauthConnectOpt);
+    parser.addOption(gmailOauthConnectOpt);
+    parser.addOption(msOauthConnectOpt);
+    parser.addOption(icloudConnectOpt);
+    parser.addOption(yahooConnectOpt);
+    parser.addOption(genericImapConnectOpt);
+    parser.addOption(genericImapConnectInteractiveOpt);
     parser.addOption(emailOpt);
     parser.addOption(hostOpt);
     parser.addOption(portOpt);
@@ -379,6 +378,8 @@ int App::Run(int argc, char* argv[])
     parser.addOption(allowLocalhostOpt);
     parser.addOption(dbDumpFoldersOpt);
     parser.addOption(dbDumpOAuthOpt);
+    parser.addOption(auditSelftestOpt);
+    parser.addOption(oauthHttpsSelftestOpt);
     parser.addOption(limitOpt);
     parser.process(qtApp);
 
@@ -399,116 +400,122 @@ int App::Run(int argc, char* argv[])
         return DumpOAuthToProof(ngks::platform::common::DbFilePath(), limit);
     }
 
-    if (parser.isSet(oauthConnectOpt)) {
+    if (parser.isSet(auditSelftestOpt)) {
+        ngks::core::logging::AuditLog::Event(
+            "AUDIT_SELFTEST",
+            "{\"provider\":\"gmail\",\"kind\":\"selftest\"}");
+        ngks::core::logging::AuditLog::Event(
+            "AUDIT_SELFTEST",
+            "{\"provider\":\"ms_graph\",\"kind\":\"selftest\"}");
+        return 0;
+    }
+
+    if (parser.isSet(oauthHttpsSelftestOpt)) {
+        ngks::providers::yahoo::YahooProfile yahoo;
+        ngks::core::oauth::OAuthConfig cfg;
+        cfg.provider = yahoo.ProviderId();
+        cfg.redirectScheme = "https";
+        cfg.redirectHost = "localhost";
+        cfg.listenUseHttps = true;
+        cfg.listenPort = 53682;
+        cfg.timeoutSeconds = 10;
+        cfg.certPath = "artifacts/certs/localhost.crt.pem";
+        cfg.keyPath = "artifacts/certs/localhost.key.pem";
+
+        QString redirectUri;
+        QString selftestError;
+        if (!ngks::core::oauth::OAuthBroker::OAuthHttpsSelftest(cfg, redirectUri, selftestError)) {
+            std::cout << "OAUTH_HTTPS_SELFTEST_FAIL " << selftestError.toStdString() << std::endl;
+            return 75;
+        }
+
+        std::cout << "OAUTH_HTTPS_SELFTEST_OK redirectUri=" << redirectUri.toStdString() << std::endl;
+        return 0;
+    }
+
+    ngks::providers::core::ProviderRegistry providerRegistry;
+    providerRegistry.RegisterBuiltins(db);
+
+    if (parser.isSet(oauthConnectOpt)
+        || parser.isSet(gmailOauthConnectOpt)
+        || parser.isSet(msOauthConnectOpt)
+        || parser.isSet(icloudConnectOpt)
+        || parser.isSet(yahooConnectOpt)
+        || parser.isSet(genericImapConnectOpt)
+        || parser.isSet(genericImapConnectInteractiveOpt)) {
         const QString email = parser.value(emailOpt).trimmed();
-        if (email.isEmpty()) {
+        if (email.isEmpty()
+            && !parser.isSet(genericImapConnectOpt)
+            && !parser.isSet(genericImapConnectInteractiveOpt)
+            && !parser.isSet(icloudConnectOpt)
+            && !parser.isSet(yahooConnectOpt)) {
             ngks::core::logging::AuditLog::Event("OAUTH_CONNECT_FAIL", "{\"reason\":\"missing-email\"}");
             WriteOAuthConnectProof("FAIL", "", "missing-email", "", CountOAuthRows(db));
             return 70;
         }
 
-        // Prefer ENV; if empty, fall back to DB-stored provider creds.
-        QString clientId = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_ID")).trimmed();
-        QString clientSecret = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_SECRET")).trimmed();
-        QString credsSource = "env";
-
-        if (clientId.isEmpty() || clientSecret.isEmpty()) {
-            QString dbClientId;
-            QString dbClientSecret;
-            QString dbCredsErr;
-            const bool credsFound = ngks::core::auth::OAuthStore::GetProviderClientCredentials(
-                db, "gmail", dbClientId, dbClientSecret, dbCredsErr);
-            if (credsFound) {
-                if (clientId.isEmpty()) clientId = dbClientId;
-                if (clientSecret.isEmpty()) clientSecret = dbClientSecret;
-                credsSource = "db";
+        QString providerId;
+        if (parser.isSet(gmailOauthConnectOpt)) {
+            providerId = "gmail";
+        } else if (parser.isSet(msOauthConnectOpt)) {
+            providerId = "ms_graph";
+        } else if (parser.isSet(icloudConnectOpt)) {
+            providerId = "icloud";
+        } else if (parser.isSet(yahooConnectOpt)) {
+            providerId = "yahoo_app_password";
+        } else if (parser.isSet(genericImapConnectOpt) || parser.isSet(genericImapConnectInteractiveOpt)) {
+            providerId = "generic_imap";
+        } else {
+            const auto* discovered = providerRegistry.DetectProviderByEmail(email);
+            if (!discovered) {
                 ngks::core::logging::AuditLog::Event(
-                    "OAUTH_CREDS_FALLBACK",
-                    QString("{\"provider\":\"gmail\",\"source\":\"db\"}").toStdString());
-            } else if (!dbCredsErr.isEmpty()) {
-                ngks::core::logging::AuditLog::Event(
-                    "OAUTH_CREDS_FAIL",
-                    QString("{\"provider\":\"gmail\",\"reason\":\"%1\"}").arg(JsonEscape(dbCredsErr)).toStdString());
+                    "OAUTH_CONNECT_FAIL",
+                    QString("{\"reason\":\"provider-not-detected\",\"email\":\"%1\"}")
+                        .arg(JsonEscape(RedactUsername(email)))
+                        .toStdString());
+                WriteOAuthConnectProof("FAIL", RedactUsername(email), "provider-not-detected", "", CountOAuthRows(db));
+                return 73;
             }
+            providerId = discovered->ProviderId();
         }
 
-        if (clientId.isEmpty()) {
-            ngks::core::logging::AuditLog::Event("OAUTH_CONNECT_FAIL", "{\"reason\":\"missing-client-id\"}");
-            WriteOAuthConnectProof("FAIL", RedactUsername(email), "missing-client-id", "", CountOAuthRows(db));
-            return 71;
-        }
-        if (clientSecret.isEmpty()) {
-            ngks::core::logging::AuditLog::Event("OAUTH_CONNECT_FAIL", "{\"reason\":\"missing-client-secret\"}");
-            WriteOAuthConnectProof("FAIL", RedactUsername(email), "missing-client-secret", "", CountOAuthRows(db));
-            return 71;
+        auto* driver = providerRegistry.GetAuthDriverById(providerId);
+        if (!driver) {
+            ngks::core::logging::AuditLog::Event(
+                "OAUTH_CONNECT_FAIL",
+                QString("{\"reason\":\"driver-not-found\",\"provider\":\"%1\"}")
+                    .arg(JsonEscape(providerId))
+                    .toStdString());
+            WriteOAuthConnectProof("FAIL", RedactUsername(email), "driver-not-found", "", CountOAuthRows(db));
+            return 74;
         }
 
-        const QString emailMasked = RedactUsername(email);
         ngks::core::logging::AuditLog::Event(
             "OAUTH_CONNECT_START",
-            QString("{\"provider\":\"gmail\",\"email\":\"%1\",\"creds_source\":\"%2\"}")
-                .arg(JsonEscape(emailMasked), JsonEscape(credsSource))
+            QString("{\"provider\":\"%1\",\"email\":\"%2\"}")
+                .arg(JsonEscape(providerId), JsonEscape(RedactUsername(email)))
                 .toStdString());
 
-        ngks::core::oauth::OAuthConfig cfg;
-        cfg.provider = "gmail";
-        cfg.email = email;
-        cfg.clientId = clientId;
-        cfg.clientSecret = clientSecret;
-        cfg.authEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
-        cfg.tokenEndpoint = "https://oauth2.googleapis.com/token";
-        cfg.scope = "https://mail.google.com/";
-        cfg.listenPort = 0;
-        cfg.timeoutSeconds = 180;
-
-        ngks::core::oauth::OAuthResult oauthResult;
-        QString connectError;
-        QString brokerProofPath;
-        if (!ngks::core::oauth::OAuthBroker::ConnectAndFetchTokens(cfg, oauthResult, connectError, brokerProofPath)) {
-            const QString userMessage = OAuthUserFacingMessage(connectError);
+        const bool interactiveGenericImap = parser.isSet(genericImapConnectInteractiveOpt) && providerId.compare("generic_imap", Qt::CaseInsensitive) == 0;
+        const ngks::auth::AuthResult result = interactiveGenericImap
+            ? driver->BeginConnectInteractive(email)
+            : driver->BeginConnect(email);
+        if (!result.ok) {
             ngks::core::logging::AuditLog::Event(
                 "OAUTH_CONNECT_FAIL",
-                QString("{\"reason\":\"%1\",\"email\":\"%2\"}")
-                    .arg(JsonEscape(connectError), JsonEscape(emailMasked))
+                QString("{\"provider\":\"%1\",\"reason\":\"%2\",\"email\":\"%3\"}")
+                    .arg(JsonEscape(providerId), JsonEscape(result.detail), JsonEscape(RedactUsername(email)))
                     .toStdString());
-            if (!userMessage.isEmpty()) {
-                ngks::core::logging::AuditLog::Event(
-                    "OAUTH_CONNECT_POLICY_BLOCK",
-                    QString("{\"message\":\"%1\"}")
-                        .arg(JsonEscape(userMessage))
-                        .toStdString());
-                QTextStream(stderr) << userMessage << '\n';
-            }
-            WriteOAuthConnectProof("FAIL", emailMasked, connectError, brokerProofPath, CountOAuthRows(db));
-            return 71;
-        }
-
-        ngks::core::auth::OAuthTokenRecord tokenRec;
-        tokenRec.provider = "gmail";
-        tokenRec.email = email;
-        tokenRec.refreshToken = oauthResult.refreshToken;
-        tokenRec.accessToken = oauthResult.accessToken;
-        tokenRec.expiresAtUtc = oauthResult.expiresAtUtc;
-        tokenRec.clientId = clientId;
-        tokenRec.clientSecret = clientSecret;
-
-        QString storeError;
-        if (!ngks::core::auth::OAuthStore::UpsertToken(db, tokenRec, storeError)) {
-            ngks::core::logging::AuditLog::Event(
-                "OAUTH_CONNECT_FAIL",
-                QString("{\"reason\":\"%1\",\"email\":\"%2\"}")
-                    .arg(JsonEscape(storeError), JsonEscape(emailMasked))
-                    .toStdString());
-            WriteOAuthConnectProof("FAIL", emailMasked, storeError, brokerProofPath, CountOAuthRows(db));
-            return 72;
+            WriteOAuthConnectProof("FAIL", RedactUsername(email), result.detail, result.brokerProofPath, CountOAuthRows(db));
+            return result.exitCode;
         }
 
         ngks::core::logging::AuditLog::Event(
             "OAUTH_CONNECT_OK",
-            QString("{\"provider\":\"gmail\",\"email\":\"%1\"}")
-                .arg(JsonEscape(emailMasked))
+            QString("{\"provider\":\"%1\",\"email\":\"%2\"}")
+                .arg(JsonEscape(providerId), JsonEscape(RedactUsername(email)))
                 .toStdString());
-        WriteOAuthConnectProof("OK", emailMasked, "", brokerProofPath, CountOAuthRows(db));
+        WriteOAuthConnectProof("OK", RedactUsername(email), result.detail, result.brokerProofPath, CountOAuthRows(db));
         return 0;
     }
 
@@ -521,8 +528,6 @@ int App::Run(int argc, char* argv[])
         const bool tls = parser.value(tlsOpt).compare("false", Qt::CaseInsensitive) != 0;
         const bool allowLocalhost = parser.isSet(allowLocalhostOpt);
         const QString effectiveEmail = email.isEmpty() ? username : email;
-        bool useXoauth2 = false;
-        QString oauthAccessToken;
 
         if (effectiveEmail.isEmpty() || host.isEmpty()) {
             ngks::core::logging::AuditLog::Event("RESOLVE_FAIL", "{\"reason\":\"missing-args\"}");
@@ -538,120 +543,8 @@ int App::Run(int argc, char* argv[])
             return 23;
         }
 
-        if (IsGmailImapHost(host)) {
-            ngks::core::logging::AuditLog::Event(
-                "OAUTH_LOOKUP_START",
-                QString("{\"provider\":\"gmail\",\"email\":\"%1\"}")
-                    .arg(JsonEscape(RedactUsername(effectiveEmail)))
-                    .toStdString());
-
-            QString refreshToken;
-            QString oauthLookupError;
-            const bool tokenFound = ngks::core::auth::OAuthStore::GetRefreshToken(
-                db,
-                "gmail",
-                effectiveEmail,
-                refreshToken,
-                oauthLookupError);
-
-            if (!tokenFound) {
-                if (oauthLookupError.isEmpty()) {
-                    ngks::core::logging::AuditLog::Event(
-                        "OAUTH_LOOKUP_MISS",
-                        QString("{\"provider\":\"gmail\",\"email\":\"%1\"}")
-                            .arg(JsonEscape(RedactUsername(effectiveEmail)))
-                            .toStdString());
-                } else {
-                    ngks::core::logging::AuditLog::Event(
-                        "OAUTH_LOOKUP_FAIL",
-                        QString("{\"reason\":\"%1\"}")
-                            .arg(JsonEscape(oauthLookupError))
-                            .toStdString());
-                    return 24;
-                }
-            } else {
-                ngks::core::logging::AuditLog::Event(
-                    "OAUTH_LOOKUP_OK",
-                    QString("{\"provider\":\"gmail\",\"email\":\"%1\"}")
-                        .arg(JsonEscape(RedactUsername(effectiveEmail)))
-                        .toStdString());
-
-                ngks::core::logging::AuditLog::Event("OAUTH_REFRESH_START", "{\"provider\":\"gmail\"}");
-
-                // Prefer ENV; if empty, fall back to DB provider creds.
-                QString clientId = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_ID")).trimmed();
-                QString clientSecret = QString::fromUtf8(qgetenv("NGKS_GMAIL_CLIENT_SECRET")).trimmed();
-                QString credsSource = "env";
-
-                if (clientId.isEmpty() || clientSecret.isEmpty()) {
-                    QString dbClientId;
-                    QString dbClientSecret;
-                    QString dbCredsErr;
-                    const bool credsFound = ngks::core::auth::OAuthStore::GetProviderClientCredentials(
-                        db, "gmail", dbClientId, dbClientSecret, dbCredsErr);
-                    if (credsFound) {
-                        if (clientId.isEmpty()) clientId = dbClientId;
-                        if (clientSecret.isEmpty()) clientSecret = dbClientSecret;
-                        credsSource = "db";
-                        ngks::core::logging::AuditLog::Event(
-                            "OAUTH_CREDS_FALLBACK",
-                            QString("{\"provider\":\"gmail\",\"source\":\"db\"}").toStdString());
-                    } else if (!dbCredsErr.isEmpty()) {
-                        ngks::core::logging::AuditLog::Event(
-                            "OAUTH_CREDS_FAIL",
-                            QString("{\"provider\":\"gmail\",\"reason\":\"%1\"}").arg(JsonEscape(dbCredsErr)).toStdString());
-                    }
-                }
-
-                if (clientId.isEmpty()) {
-                    ngks::core::logging::AuditLog::Event("OAUTH_REFRESH_FAIL", "{\"reason\":\"missing-client-id\"}");
-                    return 25;
-                }
-                if (clientSecret.isEmpty()) {
-                    ngks::core::logging::AuditLog::Event("OAUTH_REFRESH_FAIL", "{\"reason\":\"missing-client-secret\"}");
-                    return 25;
-                }
-
-                ngks::core::oauth::OAuthConfig cfg;
-                cfg.provider = "gmail";
-                cfg.email = effectiveEmail;
-                cfg.clientId = clientId;
-                cfg.clientSecret = clientSecret;
-                cfg.authEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
-                cfg.tokenEndpoint = "https://oauth2.googleapis.com/token";
-                cfg.scope = "https://mail.google.com/";
-                cfg.listenPort = 0;
-                cfg.timeoutSeconds = 60;
-
-                // Optional trace: show where creds came from (no secrets logged).
-                ngks::core::logging::AuditLog::Event(
-                    "OAUTH_REFRESH_CFG",
-                    QString("{\"provider\":\"gmail\",\"creds_source\":\"%1\"}").arg(JsonEscape(credsSource)).toStdString());
-
-                ngks::core::oauth::OAuthResult oauthResult;
-                QString refreshError;
-                if (!ngks::core::oauth::OAuthBroker::RefreshAccessToken(cfg, refreshToken, oauthResult, refreshError)) {
-                    ngks::core::logging::AuditLog::Event(
-                        "OAUTH_REFRESH_FAIL",
-                        QString("{\"reason\":\"%1\"}")
-                            .arg(JsonEscape(refreshError))
-                            .toStdString());
-                    return 25;
-                }
-
-                ngks::core::logging::AuditLog::Event(
-                    "OAUTH_REFRESH_OK",
-                    QString("{\"provider\":\"gmail\",\"expires_at_utc\":%1}")
-                        .arg(oauthResult.expiresAtUtc)
-                        .toStdString());
-
-                useXoauth2 = true;
-                oauthAccessToken = oauthResult.accessToken;
-            }
-        }
-
-        if (!useXoauth2 && password.isEmpty()) {
-            ngks::core::logging::AuditLog::Event("RESOLVE_FAIL", "{\"reason\":\"missing-password-and-no-oauth-token\"}");
+        if (password.isEmpty()) {
+            ngks::core::logging::AuditLog::Event("RESOLVE_FAIL", "{\"reason\":\"missing-password\"}");
             return 20;
         }
 
@@ -671,8 +564,8 @@ int App::Run(int argc, char* argv[])
         request.tls = tls;
         request.username = username;
         request.password = password;
-        request.useXoauth2 = useXoauth2;
-        request.oauthAccessToken = oauthAccessToken;
+        request.useXoauth2 = false;
+        request.oauthAccessToken.clear();
 
         ngks::core::mail::providers::imap::ImapProvider provider;
         QVector<ngks::core::mail::providers::imap::ResolvedFolder> folders;
@@ -706,15 +599,13 @@ int App::Run(int argc, char* argv[])
         ngks::core::mail::providers::imap::FolderMirrorService mirror;
         int accountId = -1;
         QString mirrorError;
-        const QString credentialRef = request.useXoauth2 ? "OAUTH_DB_REFRESH" : "DEV_PLAINTEXT";
+        const QString credentialRef = "DEV_PLAINTEXT";
         if (!mirror.MirrorResolvedAccount(db, request, credentialRef, folders, accountId, mirrorError)) {
             ngks::core::logging::AuditLog::Event("RESOLVE_FAIL", QString("{\"reason\":\"%1\"}").arg(mirrorError).toStdString());
             return 22;
         }
 
-        if (!request.useXoauth2) {
-            ngks::core::logging::AuditLog::Event("RESOLVE_WARNING", "{\"credential_ref\":\"DEV_PLAINTEXT\"}");
-        }
+        ngks::core::logging::AuditLog::Event("RESOLVE_WARNING", "{\"credential_ref\":\"DEV_PLAINTEXT\"}");
         ngks::core::logging::AuditLog::Event(
             "RESOLVE_OK",
             QString("{\"account_id\":%1,\"folder_count\":%2,\"transcript\":\"%3\"}")

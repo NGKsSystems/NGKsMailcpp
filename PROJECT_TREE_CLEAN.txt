@@ -1,0 +1,776 @@
+
+Folder PATH listing
+Volume serial number is 1E78-F171
+C:.
+|   CMakeLists.txt
+|   CMakePresets.json
+|   PROJECT_TREE_CLEAN.txt
+|   README.md
+|   
++---.ngkssys
+|   \---sessions
+|       +---089f51ae-04cb-4bcf-8b99-e1511514a893
+|       +---1a990205-6bf7-44b7-92c5-6d0548c6be0a
+|       +---30e737c8-0acd-478c-b776-e3877002aaab
+|       +---3bedf475-72b0-4a07-bbea-008fd7a20b81
+|       +---456219d4-3287-4356-a381-0930e8e0f2cf
+|       +---47557f6f-9bf0-49b4-b9cd-b4e6700afcca
+|       +---68011504-5cf2-4a36-970b-4a28c3be3b0f
+|       +---76aedee3-055c-4499-a7f9-09fdfdcd8342
+|       +---7875aee9-e6ce-49a1-abb2-848f16ba9a00
+|       +---884af88c-7edd-4ed1-afcf-9a2d6751bf18
+|       +---8ebc569e-1682-4305-b858-cfa934be32a1
+|       +---a189620c-b2ac-4694-bf11-90e59781cac6
+|       +---afab87d5-b319-4d5e-a84f-aa0dad4953b7
+|       +---c98c67f7-d649-4fdb-b6b0-264a402f296e
+|       +---c9a6ccda-454d-4b76-84e2-4ffd6ce98e3c
+|       +---d005be05-7536-497b-9f01-5a1fa8bf7ddb
+|       |       changes.log
+|       |       
+|       \---d517ee02-758b-4f22-918c-9a8ab77d6ef8
+|       tasks.json
+|       
+|   +---config
+|   +---db
+|   |       ngksmail.db
+|   |       
+|   +---logs
+|   |   |   audit.jsonl
+|   |   |   
+|   |   \---imap
+|       |   30_oauth_connect_gmail_20260224_191136_238.txt
+|       |   52_oauth_connect_result_20260224_191216_187.txt
+|       |   
+|       +---old
+|       |   +---gates
+|       |   +---ms1_20260222_225634
+|       |   +---phase_hardening_01_20260223_000210
+|       |   +---phase_ms2_20260222_232854
+|       |   +---phase_ms2_20260222_232906
+|       |   \---phase_ms2_20260223_000326
+|       \---phase_hardening_full_20260223_073243
+|   |   CMakeCache.txt
+|   |   cmake_install.cmake
+|   |   NGKsMailcpp.slnx
+|   |   NGKsMailcpp.vcxproj
+|   |   NGKsMailcpp.vcxproj.filters
+|   |   ngksmail_core0.vcxproj
+|   |   ngksmail_core0.vcxproj.filters
+|   |   ngksmail_ui0.vcxproj
+|   |   ngksmail_ui0.vcxproj.filters
+|   |   ZERO_CHECK.vcxproj
+|   |   ZERO_CHECK.vcxproj.filters
+|   |   
+|   +---.cmake
+|   |   \---api
+|   |       \---v1
+|   |           +---query
+|   |           |   \---client-vscode
+|   |           \---reply
+|   |                   index-2026-02-24T18-45-43-0980.json
+|   |                   
+|   +---.qt
+|   |       QtDeploySupport-Debug.cmake
+|   |       QtDeploySupport-MinSizeRel.cmake
+|   |       QtDeploySupport-Release.cmake
+|   |       QtDeploySupport-RelWithDebInfo.cmake
+|   |       QtDeployTargets-Debug.cmake
+|   |       QtDeployTargets-MinSizeRel.cmake
+|   |       QtDeployTargets-Release.cmake
+|   |       QtDeployTargets-RelWithDebInfo.cmake
+|   |       
+|   |   +---Debug
+|   |   +---MinSizeRel
+|   |   +---Release
+|   |   \---RelWithDebInfo
+|   +---CMakeFiles
+|   |   |   cmake.check_cache
+|   |   |   CMakeConfigureLog.yaml
+|   |   |   generate.stamp
+|   |   |   generate.stamp.depend
+|   |   |   generate.stamp.list
+|   |   |   InstallScripts.json
+|   |   |   TargetDirectories.txt
+|   |   |   
+|   |   +---4.2.3
+|   |   |   |   CMakeCXXCompiler.cmake
+|   |   |   |   CMakeDetermineCompilerABI_CXX.bin
+|   |   |   |   CMakeRCCompiler.cmake
+|   |   |   |   CMakeSystem.cmake
+|   |   |   |   VCTargetsPath.txt
+|   |   |   |   VCTargetsPath.vcxproj
+|   |   |   |   
+|   |   |   +---CompilerIdCXX
+|   |   |   |   |   CMakeCXXCompilerId.cpp
+|   |   |   |   |   CompilerIdCXX.exe
+|   |   |   |   |   CompilerIdCXX.vcxproj
+|   |   |   |   |   
+|   |   |   |   +---Debug
+|   |   |   |   |   |   CMakeCXXCompilerId.obj
+|   |   |   |   |   |   CompilerIdCXX.exe.recipe
+|   |   |   |   |   |   
+|   |   |   |   |   \---CompilerIdCXX.tlog
+|   |   |   |   |           CL.command.1.tlog
+|   |   |   |   |           Cl.items.tlog
+|   |   |   |   |           CL.read.1.tlog
+|   |   |   |   |           CL.write.1.tlog
+|   |   |   |   |           link.command.1.tlog
+|   |   |   |   |           link.read.1.tlog
+|   |   |   |   |           link.secondary.1.tlog
+|   |   |   |   |           link.write.1.tlog
+|   |   |   |   |           
+|   |   |   |   \---tmp
+|   |   |   +---VCTargetsPath
+|   |   |   |   \---x64
+|   |   |   |       \---Debug
+|   |   |   |           |   VCTargetsPath.recipe
+|   |   |   |           |   
+|   |   |   |           \---VCTargetsPath.tlog
+|   |   |   |                   
+|   |   |   \---x64
+|   |   |       \---Debug
+|   |   +---4b0d05a49a1153798c88bfcf0521a3f9
+|   |   |       generate.stamp.rule
+|   |   |       
+|   |   +---CMakeScratch
+|   |   +---NGKsMailcpp_autogen.dir
+|   |   |       AutogenInfo.json
+|   |   |       AutogenUsed_Debug.txt
+|   |   |       AutogenUsed_Release.txt
+|   |   |       ParseCache_Debug.txt
+|   |   |       ParseCache_Release.txt
+|   |   |       
+|   |   +---ngksmail_core0_autogen.dir
+|   |   |       AutogenInfo.json
+|   |   |       AutogenUsed_Debug.txt
+|   |   |       AutogenUsed_Release.txt
+|   |   |       ParseCache_Debug.txt
+|   |   |       ParseCache_Release.txt
+|   |   |       
+|   |   +---ngksmail_ui0_autogen.dir
+|   |   |       AutogenInfo.json
+|   |   |       AutogenUsed_Debug.txt
+|   |   |       AutogenUsed_Release.txt
+|   |   |       ParseCache_Debug.txt
+|   |   |       ParseCache_Release.txt
+|   |   |       
+|   |   \---pkgRedirects
+|   +---Debug
+|   |   |   NGKsMailcpp.exe
+|   |   |   NGKsMailcpp.pdb
+|   |   |   ngksmail_core0.lib
+|   |   |   ngksmail_core0.pdb
+|   |   |   ngksmail_ui0.lib
+|   |   |   ngksmail_ui0.pdb
+|   |   |   
+|   |   +---generic
+|   |   +---iconengines
+|   |   +---imageformats
+|   |   +---networkinformation
+|   |   +---platforms
+|   |   +---sqldrivers
+|   |   +---styles
+|   |   +---tls
+|   |   \---translations
+|   +---NGKsMailcpp.dir
+|   |   +---Debug
+|   |   |   |   App.obj
+|   |   |   |   main.obj
+|   |   |   |   mocs_compilation_Debug.obj
+|   |   |   |   NGKsMailcpp.exe.recipe
+|   |   |   |   NGKsMailcpp.ilk
+|   |   |   |   vc145.pdb
+|   |   |   |   
+|   |   |   +---microsoft
+|   |   |   |   \---STL
+|   |   |   +---NGKsMailcpp.tlog
+|   |   |   |       CL.command.1.tlog
+|   |   |   |       Cl.items.tlog
+|   |   |   |       CL.read.1.tlog
+|   |   |   |       CL.write.1.tlog
+|   |   |   |       link.command.1.tlog
+|   |   |   |       link.read.1.tlog
+|   |   |   |       link.secondary.1.tlog
+|   |   |   |       link.write.1.tlog
+|   |   |   |       
+|   |   |   \---NGKsMailcpp_MD.tlog
+|   |   +---MinSizeRel
+|   |   +---Release
+|   |   |   |   App.obj
+|   |   |   |   main.obj
+|   |   |   |   mocs_compilation_Release.obj
+|   |   |   |   NGKsMailcpp.exe.recipe
+|   |   |   |   
+|   |   |   +---microsoft
+|   |   |   |   \---STL
+|   |   |   +---NGKsMailcpp.tlog
+|   |   |   |       CL.command.1.tlog
+|   |   |   |       Cl.items.tlog
+|   |   |   |       CL.read.1.tlog
+|   |   |   |       CL.write.1.tlog
+|   |   |   |       link.command.1.tlog
+|   |   |   |       link.read.1.tlog
+|   |   |   |       link.secondary.1.tlog
+|   |   |   |       link.write.1.tlog
+|   |   |   |       
+|   |   |   \---NGKsMailcpp_MD.tlog
+|   |   \---RelWithDebInfo
+|   +---NGKsMailcpp_autogen
+|   |   |   mocs_compilation_Debug.cpp
+|   |   |   mocs_compilation_Release.cpp
+|   |   |   
+|   |   +---include
+|   |   +---include_Debug
+|   |   \---include_Release
+|   +---ngksmail_core0.dir
+|   |   +---Debug
+|   |   |   |   AuditLog.obj
+|   |   |   |   Db.obj
+|   |   |   |   FolderMirrorService.obj
+|   |   |   |   ImapClient.obj
+|   |   |   |   ImapProvider.obj
+|   |   |   |   mocs_compilation_Debug.obj
+|   |   |   |   ngksmail_core0.lib.recipe
+|   |   |   |   OAuthBroker.obj
+|   |   |   |   OAuthStore.obj
+|   |   |   |   Paths.obj
+|   |   |   |   Schema.obj
+|   |   |   |   SettingsStore.obj
+|   |   |   |   
+|   |   |   +---microsoft
+|   |   |   |   \---STL
+|   |   |   +---ngksmail_core0.tlog
+|   |   |   |       CL.command.1.tlog
+|   |   |   |       Cl.items.tlog
+|   |   |   |       CL.read.1.tlog
+|   |   |   |       CL.write.1.tlog
+|   |   |   |       Lib-link.read.1.tlog
+|   |   |   |       Lib-link.write.1.tlog
+|   |   |   |       Lib.command.1.tlog
+|   |   |   |       
+|   |   |   \---ngksmail_core0_MD.tlog
+|   |   +---MinSizeRel
+|   |   +---Release
+|   |   |   |   AuditLog.obj
+|   |   |   |   Db.obj
+|   |   |   |   FolderMirrorService.obj
+|   |   |   |   ImapClient.obj
+|   |   |   |   ImapProvider.obj
+|   |   |   |   mocs_compilation_Release.obj
+|   |   |   |   ngksmail_core0.lib.recipe
+|   |   |   |   OAuthBroker.obj
+|   |   |   |   OAuthStore.obj
+|   |   |   |   Paths.obj
+|   |   |   |   Schema.obj
+|   |   |   |   SettingsStore.obj
+|   |   |   |   
+|   |   |   +---microsoft
+|   |   |   |   \---STL
+|   |   |   +---ngksmail_core0.tlog
+|   |   |   |       CL.command.1.tlog
+|   |   |   |       Cl.items.tlog
+|   |   |   |       CL.read.1.tlog
+|   |   |   |       CL.write.1.tlog
+|   |   |   |       Lib-link.read.1.tlog
+|   |   |   |       Lib-link.write.1.tlog
+|   |   |   |       Lib.command.1.tlog
+|   |   |   |       
+|   |   |   \---ngksmail_core0_MD.tlog
+|   |   \---RelWithDebInfo
+|   +---ngksmail_core0_autogen
+|   |   |   mocs_compilation_Debug.cpp
+|   |   |   mocs_compilation_Release.cpp
+|   |   |   
+|   |   +---include
+|   |   +---include_Debug
+|   |   \---include_Release
+|   +---ngksmail_ui0.dir
+|   |   +---Debug
+|   |   |   |   AccountTreeModel.obj
+|   |   |   |   ComposeWindow.obj
+|   |   |   |   FolderTreeModel.obj
+|   |   |   |   MainWindow.obj
+|   |   |   |   MessageList.obj
+|   |   |   |   MessageListModel.obj
+|   |   |   |   mocs_compilation_Debug.obj
+|   |   |   |   NavigationPane.obj
+|   |   |   |   ngksmail_ui0.lib.recipe
+|   |   |   |   ReadingPane.obj
+|   |   |   |   ThreadModel.obj
+|   |   |   |   
+|   |   |   +---microsoft
+|   |   |   |   \---STL
+|   |   |   +---ngksmail_ui0.tlog
+|   |   |   |       CL.command.1.tlog
+|   |   |   |       Cl.items.tlog
+|   |   |   |       CL.read.1.tlog
+|   |   |   |       CL.write.1.tlog
+|   |   |   |       Lib-link.read.1.tlog
+|   |   |   |       Lib-link.write.1.tlog
+|   |   |   |       Lib.command.1.tlog
+|   |   |   |       
+|   |   |   \---ngksmail_ui0_MD.tlog
+|   |   +---MinSizeRel
+|   |   +---Release
+|   |   |   |   AccountTreeModel.obj
+|   |   |   |   ComposeWindow.obj
+|   |   |   |   FolderTreeModel.obj
+|   |   |   |   MainWindow.obj
+|   |   |   |   MessageList.obj
+|   |   |   |   MessageListModel.obj
+|   |   |   |   mocs_compilation_Release.obj
+|   |   |   |   NavigationPane.obj
+|   |   |   |   ngksmail_ui0.lib.recipe
+|   |   |   |   ReadingPane.obj
+|   |   |   |   ThreadModel.obj
+|   |   |   |   
+|   |   |   +---microsoft
+|   |   |   |   \---STL
+|   |   |   +---ngksmail_ui0.tlog
+|   |   |   |       CL.command.1.tlog
+|   |   |   |       Cl.items.tlog
+|   |   |   |       CL.read.1.tlog
+|   |   |   |       CL.write.1.tlog
+|   |   |   |       Lib-link.read.1.tlog
+|   |   |   |       Lib-link.write.1.tlog
+|   |   |   |       Lib.command.1.tlog
+|   |   |   |       
+|   |   |   \---ngksmail_ui0_MD.tlog
+|   |   \---RelWithDebInfo
+|   +---ngksmail_ui0_autogen
+|   |   |   mocs_compilation_Debug.cpp
+|   |   |   mocs_compilation_Release.cpp
+|   |   |   
+|   |   +---include
+|   |   +---include_Debug
+|   |   |   \---QN3JD4UKWT
+|   |   |           moc_NavigationPane.cpp
+|   |   |           moc_NavigationPane.cpp.d
+|   |   |           
+|   |   +---include_Release
+|   |   |   \---QN3JD4UKWT
+|   |   |           moc_NavigationPane.cpp
+|   |   |           moc_NavigationPane.cpp.d
+|   |   |           
+|   |   \---QN3JD4UKWT
+|   +---Release
+|   |   |   D3Dcompiler_47.dll
+|   |   |   icuuc.dll
+|   |   |   NGKsMailcpp.exe
+|   |   |   ngksmail_core0.lib
+|   |   |   ngksmail_ui0.lib
+|   |   |   opengl32sw.dll
+|   |   |   Qt6Core.dll
+|   |   |   Qt6Gui.dll
+|   |   |   Qt6Network.dll
+|   |   |   Qt6Sql.dll
+|   |   |   Qt6Svg.dll
+|   |   |   Qt6Widgets.dll
+|   |   |   
+|   |   +---generic
+|   |   |       qtuiotouchplugin.dll
+|   |   |       
+|   |   +---iconengines
+|   |   |       qsvgicon.dll
+|   |   |       
+|   |   +---imageformats
+|   |   |       qgif.dll
+|   |   |       qico.dll
+|   |   |       qjpeg.dll
+|   |   |       qsvg.dll
+|   |   |       
+|   |   +---networkinformation
+|   |   |       qnetworklistmanager.dll
+|   |   |       
+|   |   +---platforms
+|   |   |       qwindows.dll
+|   |   |       
+|   |   +---sqldrivers
+|   |   |       qsqlibase.dll
+|   |   |       qsqlite.dll
+|   |   |       qsqlmimer.dll
+|   |   |       qsqloci.dll
+|   |   |       qsqlodbc.dll
+|   |   |       qsqlpsql.dll
+|   |   |       
+|   |   +---styles
+|   |   |       qmodernwindowsstyle.dll
+|   |   |       
+|   |   +---tls
+|   |   |       qcertonlybackend.dll
+|   |   |       qschannelbackend.dll
+|   |   |       
+|   |   \---translations
+|   +---x64
+|   |   +---Debug
+|   |   |   |   |   
+|   |   |   |           
+|   |   |   \---ZERO_CHECK
+|   |   |       |   ZERO_CHECK.recipe
+|   |   |       |   
+|   |   |       \---ZERO_CHECK.tlog
+|   |   |               
+|   |   \---Release
+|   |       |   |   
+|   |       |           
+|   |       \---ZERO_CHECK
+|   |           |   ZERO_CHECK.recipe
+|   |           |   
+|   |           \---ZERO_CHECK.tlog
+|   |                   
+|   \---ZERO_CHECK.dir
+|       +---Debug
+|       +---MinSizeRel
+|       +---Release
+|       \---RelWithDebInfo
+|   \---CMakeFiles
+|       +---4.2.3
+|       |   +---CompilerIdCXX
+|       |   |   +---Debug
+|       |   |   |   \---CompilerIdCXX.tlog
+|       |   |   \---tmp
+|       |   +---VCTargetsPath
+|       |   |   \---x64
+|       |   |       \---Debug
+|       |   |           \---VCTargetsPath.tlog
+|       |   \---x64
+|       |       \---Debug
+|       +---c8af0ea1587ba9e80e924d93b6c54b0d
+|       +---CMakeScratch
+|       +---NGKsMailcpp_autogen.dir
+|       +---ngksmail_core0_autogen.dir
+|       +---ngksmail_ui0_autogen.dir
+|       \---pkgRedirects
++---docs
+|       00_SCOPE.md
+|       01_ARCH.md
+|       02_LOGGING_AUDIT.md
+|       03_DATA_MODEL.md
+|       99_ERROR_CORRECTION_LOG.md
+|       GMAIL_WORKING.md
+|       
++---MS Oauth XOauth2
++---src
+|   |   CMakeLists.txt
+|   |   
+|   +---app
+|   |   |   App.cpp
+|   |   |   App.h
+|   |   |   main.cpp
+|   |   |   
+|   |   +---gmail
+|   |   |       App.cpp
+|   |   |       App.h
+|   |   |       main.cpp
+|   |   |       
+|   |   +---ios
+|   |   |       App.cpp
+|   |   |       App.h
+|   |   |       main.cpp
+|   |   |       
+|   |   +---MS
+|   |   |       App.cpp
+|   |   |       App.h
+|   |   |       main.cpp
+|   |   |       
+|   |   +---other
+|   |   |       App.cpp
+|   |   |       App.h
+|   |   |       main.cpp
+|   |   |       
+|   |   \---yahoo
+|   |           App.cpp
+|   |           App.h
+|   |           main.cpp
+|   |           
+|   +---core
+|   |   +---auth
+|   |   |       OAuthStore.cpp
+|   |   |       OAuthStore.h
+|   |   |       
+|   |   +---bus
+|   |   |       Commands.h
+|   |   |       EventBus.cpp
+|   |   |       EventBus.h
+|   |   |       
+|   |   +---config
+|   |   |       SettingsStore.cpp
+|   |   |       SettingsStore.h
+|   |   |       
+|   |   +---crypto
+|   |   |       Keychain.cpp
+|   |   |       Keychain.h
+|   |   |       
+|   |   +---logging
+|   |   |       AuditLog.cpp
+|   |   |       AuditLog.h
+|   |   |       Log.cpp
+|   |   |       Log.h
+|   |   |       
+|   |   +---mail
+|   |   |   +---mime
+|   |   |   |       MimeParser.cpp
+|   |   |   |       MimeParser.h
+|   |   |   |       
+|   |   |   +---providers
+|   |   |   |   |   Provider.h
+|   |   |   |   |   ProviderRegistry.cpp
+|   |   |   |   |   ProviderRegistry.h
+|   |   |   |   |   
+|   |   |   |   +---imap
+|   |   |   |   |       FolderMirrorService.cpp
+|   |   |   |   |       FolderMirrorService.h
+|   |   |   |   |       ImapClient.cpp
+|   |   |   |   |       ImapClient.h
+|   |   |   |   |       ImapProvider.cpp
+|   |   |   |   |       ImapProvider.h
+|   |   |   |   |       
+|   |   |   |   \---smtp
+|   |   |   |           SmtpClient.cpp
+|   |   |   |           SmtpClient.h
+|   |   |   |           SmtpProvider.cpp
+|   |   |   |           SmtpProvider.h
+|   |   |   |           
+|   |   |   +---sync
+|   |   |   |       JobQueue.cpp
+|   |   |   |       JobQueue.h
+|   |   |   |       SyncEngine.cpp
+|   |   |   |       SyncEngine.h
+|   |   |   |       
+|   |   |   \---types
+|   |   |           Address.h
+|   |   |           Flags.h
+|   |   |           MailIds.h
+|   |   |           Mime.h
+|   |   |           
+|   |   +---oauth
+|   |   |   |   OAuthBroker.cpp
+|   |   |   |   OAuthBroker.h
+|   |   |   |   
+|   |   |   \---providers
+|   |   |       +---gmail
+|   |   |       \---ms
+|   |   \---storage
+|   |           Db.cpp
+|   |           Db.h
+|   |           Reindexer.cpp
+|   |           Reindexer.h
+|   |           Schema.cpp
+|   |           Schema.h
+|   |           
+|   +---platform
+|   |   +---common
+|   |   |       Paths.cpp
+|   |   |       Paths.h
+|   |   |       Time.cpp
+|   |   |       Time.h
+|   |   |       
+|   |   \---win
+|   |           WinAppUserDataPaths.cpp
+|   |           WinKeychain.cpp
+|   |           
+|   \---ui
+|       |   MainWindow.cpp
+|       |   MainWindow.h
+|       |   
+|       +---models
+|       |       AccountTreeModel.cpp
+|       |       AccountTreeModel.h
+|       |       FolderTreeModel.cpp
+|       |       FolderTreeModel.h
+|       |       MessageListModel.cpp
+|       |       MessageListModel.h
+|       |       ThreadModel.cpp
+|       |       ThreadModel.h
+|       |       
+|       \---shell
+|               ComposeWindow.cpp
+|               ComposeWindow.h
+|               MessageList.cpp
+|               MessageList.h
+|               NavigationPane.cpp
+|               NavigationPane.h
+|               ReadingPane.cpp
+|               ReadingPane.h
+|               
++---tools
+|   \---dev
+|           run_audit_smoke.ps1
+|           run_resolve_test.ps1
+|           run_resolve_test_xoauth2.ps1
+|           
+|   +---bundles
+|   +---exec_sessions
+|   |   +---exec_09535e6d264ce887
+|   |   |   \---ca95bcec-4150-441e-8890-80c18d63840d
+|   |   +---exec_0abfc7bf3a34be38
+|   |   |   \---528337e1-b09d-4a1c-a7a7-d7c614aed1fd
+|   |   +---exec_363ea267b49cfce1
+|   |   |   \---f6846a25-8469-4ff6-935b-a36d36a41338
+|   |   +---exec_4019e5b77ea62622
+|   |   |   \---542d6952-380b-45bc-bddd-fe8a34da18fe
+|   |   +---exec_5c126bc544acc264
+|   |   |   \---29f23776-f805-4b90-84af-379d88a68d21
+|   |   +---exec_6516ffee638670ae
+|   |   |   \---0e51e932-1d38-41ed-a404-7b50ac85d31b
+|   |   +---exec_85cf033b09906085
+|   |   |   \---47c9c48a-93a3-4cfd-9b69-85bb41051fae
+|   |   +---exec_8b0938208a9f2384
+|   |   |   \---92b9a52e-946f-4659-ab8e-210b0a888da5
+|   |   +---exec_a383a1dc2c0b07e8
+|   |   |   \---6f1bff52-4342-4db3-afa7-fdf8f1882c29
+|   |   +---exec_a6fcc9bf41863617
+|   |   |   \---f4f0ceba-3a59-47c7-ad01-2f6e31cab443
+|   |   +---exec_a954d4fda5b56d35
+|   |   |   \---e226c17e-33e0-4a7f-8992-baa9d2748ebb
+|   |   +---exec_a9600c67cad5f67d
+|   |   |   \---4666d1ec-d362-41cb-8904-952f9010d2d8
+|   |   +---exec_adc68333e03f0276
+|   |   |   \---95ab0a29-fe60-4356-87c6-7889a15617fd
+|   |   +---exec_c6a854b10d6a0bd1
+|   |   |   \---63b7e741-9d00-4a67-8556-cf8e7d9a1c58
+|   |   +---exec_d22ec77b6e2f6d62
+|   |   |   \---ae4b7bbd-7356-45b2-a174-e067957ef765
+|   |   +---exec_e2847a98eaf3db95
+|   |   |   \---93f14e7a-0c6d-473e-bf2c-997ac057bd9d
+|   |   +---exec_e91f2cd3556c1eee
+|   |   |   \---b076b8f5-e238-472b-aa4e-e82b01033485
+|   |   \---exec_f0493182b7dfa931
+|   |       \---4fd9b047-6dda-48b2-96b4-3416fa3233f0
+|   +---runtime
+|   |   |   activity_log.txt
+|   |   |   
+|   |   +---file_diffs
+|   |   +---git
+|   |   +---snapshots
+|   |   |       2026-02-24T19-05-55-670Z__src_core_oauth_OAuthBroker.cpp.after
+|   |   |       2026-02-24T19-16-40-775Z__docs_GMAIL_WORKING.md.after
+|   |   |       2026-02-24T19-22-02-376Z__README.md.after
+|   |   |       
+|   |   \---task_logs
+|   |           2026-02-24T18-33-01-155Z__rollback-cleanup-pass.end.txt
+|   |           2026-02-24T18-33-05-071Z__rollback-state-snapshot.start.txt
+|   |           2026-02-24T18-33-08-034Z__rollback-state-snapshot.end.txt
+|   |           2026-02-24T18-39-14-017Z__gmail-retry-now.start.txt
+|   |           2026-02-24T18-39-18-688Z__gmail-retry-now.end.txt
+|   |           2026-02-24T18-44-11-531Z__gmail-retry-configure-preset.start.txt
+|   |           2026-02-24T18-44-17-516Z__gmail-retry-configure-preset.end.txt
+|   |           2026-02-24T18-48-53-769Z__gmail-retry-final-run.start.txt
+|   |           2026-02-24T18-49-18-458Z__gmail-retry-check-running.start.txt
+|   |           2026-02-24T18-49-25-314Z__gmail-retry-check-running.end.txt
+|   |           2026-02-24T18-49-50-848Z__gmail-retry-wait-run-finish.start.txt
+|   |           2026-02-24T18-50-17-274Z__gmail-retry-wait-run-finish.end.txt
+|   |           2026-02-24T18-50-17-587Z__gmail-retry-final-run.end.txt
+|   |           2026-02-24T18-51-32-326Z__gmail-retry-once2-task.start.txt
+|   |           2026-02-24T18-52-00-270Z__gmail-retry2-proc-check.start.txt
+|   |           2026-02-24T18-52-07-669Z__gmail-retry2-proc-check.end.txt
+|   |           2026-02-24T18-52-25-702Z__gmail-retry2-wait-finish.start.txt
+|   |           2026-02-24T18-52-34-414Z__gmail-retry-once2-task.end.txt
+|   |           2026-02-24T18-52-34-685Z__gmail-retry2-wait-finish.end.txt
+|   |           2026-02-24T19-03-20-121Z__gmail-retry-release-run.start.txt
+|   |           2026-02-24T19-05-25-635Z__gmail-release-attempt2-run.start.txt
+|   |           2026-02-24T19-05-28-215Z__gmail-retry-release-run.end.txt
+|   |           2026-02-24T19-06-15-323Z__gmail-release-attempt2-run.end.txt
+|   |           2026-02-24T19-06-29-527Z__check-exe-and-dlls.start.txt
+|   |           2026-02-24T19-06-31-219Z__check-exe-and-dlls.end.txt
+|   |           2026-02-24T19-06-32-449Z__deploy-qt-release.start.txt
+|   |           2026-02-24T19-06-34-432Z__deploy-qt-release.end.txt
+|   |           2026-02-24T19-06-56-854Z__verify-qt-dll-after-deploy.start.txt
+|   |           2026-02-24T19-06-58-702Z__verify-qt-dll-after-deploy.end.txt
+|   |           2026-02-24T19-07-10-368Z__release-launch-check.start.txt
+|   |           2026-02-24T19-07-12-292Z__release-launch-check.end.txt
+|   |           2026-02-24T19-11-34-373Z__gmail-single-retry-run.start.txt
+|   |           2026-02-24T19-12-08-584Z__gmail-single-proc-check.start.txt
+|   |           2026-02-24T19-12-11-140Z__gmail-single-proc-check.end.txt
+|   |           2026-02-24T19-12-17-637Z__gmail-single-retry-run.end.txt
+|   |           2026-02-24T19-12-42-662Z__gmail-single-wait-finish.start.txt
+|   |           2026-02-24T19-12-44-960Z__gmail-single-wait-finish.end.txt
+|   |           2026-02-24T19-13-00-004Z__single-retry-capture-tail.start.txt
+|   |           2026-02-24T19-13-01-898Z__single-retry-capture-tail.end.txt
+|   |           2026-02-24T19-16-16-706Z__github-mark-status-snapshot.start.txt
+|   |           2026-02-24T19-16-18-578Z__github-mark-status-snapshot.end.txt
+|   |           2026-02-24T19-18-11-051Z__github-mark-verify.start.txt
+|   |           2026-02-24T19-18-12-887Z__github-mark-verify.end.txt
+|   |           2026-02-24T19-29-23-730Z__post-push-verify-readme-marker.start.txt
+|   |           2026-02-24T19-29-25-609Z__post-push-verify-readme-marker.end.txt
+|   |           
+|   \---test_outputs
+|       +---custom
+|       +---jest
+|       \---playwright
+    |   github_mark_branch.txt
+    |   github_mark_status.txt
+    |   github_mark_verify_log.txt
+    |   github_mark_verify_status.txt
+    |   gmail_retry_current.txt
+    |   post_push_verify_log.txt
+    |   post_push_verify_status.txt
+    |   release_launch_check.txt
+    |   rollback_action3.txt
+    |   rollback_head3.txt
+    |   rollback_log5_3.txt
+    |   rollback_status3.txt
+    |   run_gmail_release_attempt2.ps1
+    |   run_gmail_retry_now.ps1
+    |   run_gmail_retry_once2.ps1
+    |   run_gmail_retry_release.ps1
+    |   run_gmail_single_retry.ps1
+    |   wait_gmail_retry2_run.ps1
+    |   wait_gmail_retry_run.ps1
+    |   wait_gmail_single_retry.ps1
+    |   windeploy_release.txt
+    |   
+    +---gmail_oauth_302_fix_20260224_182047
+    +---gmail_oauth_302_fix_20260224_182232
+    +---gmail_release_attempt2_20260224_220526
+    |       10_exit.txt
+    |       99_pf.txt
+    |       
+    +---gmail_retry2_20260224_215134
+    |       01_proc.txt
+    |       02_wait_done.txt
+    |       10_exit.txt
+    |       99_pf.txt
+    |       
+    +---gmail_retry_20260224_213916
+    |       04_configure.txt
+    |       08_wait_done.txt
+    |       99_pf.txt
+    |       
+    +---gmail_retry_20260224_214558
+    |       10_exit.txt
+    |       99_pf.txt
+    |       
+    +---gmail_retry_20260224_214854
+    |       01_proc.txt
+    |       02_wait_done.txt
+    |       10_exit.txt
+    |       99_pf.txt
+    |       
+    +---gmail_retry_release_20260224_220320
+    |       07_wait_done.txt
+    |       10_exit.txt
+    |       99_pf.txt
+    |       
+    +---gmail_single_retry_20260224_221135
+    |       01_proc.txt
+    |       02_wait.txt
+    |       10_exit.txt
+    |       11_audit_tail_connect.txt
+    |       99_pf.txt
+    |       
+    +---ms_oauth_dbcreds_20260224_071107
+    +---ms_oauth_dbcreds_20260224_074403
+    +---phase_hardening_full_20260223_073243
+    +---phase_hardening_full_20260223_075158
+    +---phase_hardening_p1_20260223_094056
+    +---phase_ms1
+    +---phase_ms2
+    |   \---source_for_patch
+    +---phase_ms_hostresolve_20260224_080000
+    +---phase_ms_hostresolve_20260224_120118
+    +---phase_ms_hostresolve_20260224_135436
+    +---phase_oauth_conversion_p1_20260223_210821
+    +---phase_oauth_conversion_p2_ms_authorize_loopback_20260223_215021
+    \---phase_oauth_conversion_p2_ms_authorize_loopback_20260223_220010
+

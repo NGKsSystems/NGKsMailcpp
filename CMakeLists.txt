@@ -16,6 +16,22 @@ set(NGKSMAIL_CORE0_SOURCES
 	src/core/auth/OAuthStore.cpp
 	src/core/logging/AuditLog.cpp
 	src/core/oauth/OAuthBroker.cpp
+	src/providers/core/ProviderRegistry.cpp
+	src/providers/gmail/GmailProfile.cpp
+	src/providers/gmail/GmailAuthDriver.cpp
+	src/providers/generic_imap/GenericImapProfile.cpp
+	src/providers/generic_imap/GenericImapAuthDriver.cpp
+	src/providers/icloud/ICloudProfile.cpp
+	src/providers/icloud/ICloudAuthDriver.cpp
+	src/providers/ms_graph/MsGraphProfile.cpp
+	src/providers/ms_graph/MsGraphAuthDriver.cpp
+	src/providers/yahoo_app_password/YahooAppPasswordProfile.cpp
+	src/providers/yahoo_app_password/YahooAppPasswordAuthDriver.cpp
+	src/providers/yahoo/YahooProfile.cpp
+	src/providers/yahoo/YahooAuthDriver.cpp
+	src/resolve/ProviderDiscovery.cpp
+	src/db/BasicCredentialStore.cpp
+	src/db/TokenStore.cpp
 	src/core/storage/Db.cpp
 	src/core/storage/Schema.cpp
 	src/core/mail/providers/imap/ImapClient.cpp

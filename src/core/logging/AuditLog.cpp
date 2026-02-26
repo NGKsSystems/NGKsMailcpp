@@ -6,6 +6,37 @@
 #include <iomanip>
 #include <sstream>
 
+namespace {
+
+std::string ExtractProviderId(const std::string& payloadJson)
+{
+    const std::string key = "\"provider\"";
+    const std::size_t keyPos = payloadJson.find(key);
+    if (keyPos == std::string::npos) {
+        return "";
+    }
+
+    const std::size_t colonPos = payloadJson.find(':', keyPos + key.size());
+    if (colonPos == std::string::npos) {
+        return "";
+    }
+
+    std::size_t valueStart = payloadJson.find('"', colonPos + 1);
+    if (valueStart == std::string::npos) {
+        return "";
+    }
+    ++valueStart;
+
+    const std::size_t valueEnd = payloadJson.find('"', valueStart);
+    if (valueEnd == std::string::npos || valueEnd <= valueStart) {
+        return "";
+    }
+
+    return payloadJson.substr(valueStart, valueEnd - valueStart);
+}
+
+} // namespace
+
 namespace ngks::core::logging {
 
 std::string AuditLog::s_path;
@@ -62,6 +93,23 @@ void AuditLog::WriteLineLocked(const std::string& line)
 {
     std::ofstream f(s_path, std::ios::app | std::ios::binary);
     f << line;
+
+    const std::filesystem::path globalPath(s_path);
+    const std::string providerId = ExtractProviderId(line);
+    if (providerId.empty()) {
+        return;
+    }
+
+    const std::filesystem::path providersDir = globalPath.parent_path() / "providers";
+    std::error_code ec;
+    std::filesystem::create_directories(providersDir, ec);
+    if (ec) {
+        return;
+    }
+
+    const std::filesystem::path providerFile = providersDir / (providerId + ".jsonl");
+    std::ofstream p(providerFile, std::ios::app | std::ios::binary);
+    p << line;
 }
 
 std::string AuditLog::NowIsoUtc()

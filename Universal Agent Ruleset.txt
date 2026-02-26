@@ -1,0 +1,296 @@
+Universal Agent Ruleset (Authoritative)
+STATUS
+
+This ruleset is authoritative and binding.
+All work must comply with it. No exceptions.
+
+================================================================================
+1) Mandatory Load & Confirmation (Hard Stop)
+================================================================================
+
+Every task MUST begin with:
+
+STEP 1:
+Load and comply with the Universal Agent Ruleset.
+
+STEP 2:
+Confirm compliance explicitly before proceeding.
+
+If confirmation is missing, STOP.
+Failure to confirm is a hard stop.
+
+================================================================================
+2) No Placeholders / Loud Failure (Hard Stop)
+================================================================================
+
+Placeholders are forbidden in all forms.
+Guessing, assumptions, or implied values are forbidden.
+
+If required information is missing, respond only with:
+
+FAIL:
+Required information missing: <exact item>.
+Cannot proceed.
+
+No workaround language. No speculation.
+
+================================================================================
+3) Documentation Rules (Strict, Single Folder)
+================================================================================
+
+All documentation MUST live in a single folder:
+docs/
+
+Only the following documentation files are permitted:
+
+docs/PROJECT_SCOPE.md
+docs/ERROR_CORRECTION_LOG.md
+docs/PROGRESS.md
+
+Rules:
+- These files are expanded, never duplicated.
+- No new documentation files may be created.
+- All documentation .md files MUST include markdownlint disable statements at the top.
+- Violations require deletion or migration into the permitted docs, not justification.
+
+Exemptions (NOT documentation; allowed anywhere as normal repo files):
+- README.md
+- .gitignore
+- LICENSE
+- NOTICE
+- Universal Agent Ruleset.txt (this file)
+- Universal Agent Ruleset.md (if present)
+
+Markdownlint rule clarification:
+- The markdownlint disable requirement applies to the permitted documentation files in docs/.
+- Proof files MUST NOT be .md (see Section 4).
+
+================================================================================
+4) Proof / Artifacts / Runtime Outputs (Allowed, Not Documentation)
+================================================================================
+
+Proof files are NOT documentation. They are operational evidence.
+
+Allowed locations (only):
+- _proof/
+- artifacts/
+- logs/
+
+Allowed file types:
+- .txt, .log, .jsonl, .pdf, or other non-.md formats.
+
+Forbidden for proof:
+- .md (proof files must not be markdown to avoid lint noise)
+
+Runtime outputs (sessions, caches, logs) MUST NOT be committed.
+If runtime outputs appear as tracked/dirty files, STOP and fix git hygiene
+(see Section 11).
+
+Cleanup clarification:
+- Cleanup refers to code quality (dead code, unused imports, broken paths),
+  and obsolete docs/text that will never be read again.
+- Cleanup does NOT mean deleting valid proof logs that are part of the run record.
+
+================================================================================
+5) No Orphaned Work (Hard Requirement)
+================================================================================
+
+Forbidden:
+- Dead code
+- Unused imports
+- Unused methods
+- TODOs
+- "Temporary" logic left behind
+- "We'll clean this later"
+
+All changes MUST leave the codebase clean in the same task step.
+
+================================================================================
+6) Deletion Is Preferred Over Preservation (Clarified Scope)
+================================================================================
+
+Deletion is preferred for:
+- Obsolete .md or .txt files that are redundant / outdated / will never be read again
+- Unused/unreferenced code, tests, helpers, docs
+- Redundant or speculative artifacts
+
+Do NOT "archive" dead files or comment them out.
+Delete them or consolidate into the permitted ongoing docs.
+
+================================================================================
+7) Feature Claims Require Proof (Definition)
+================================================================================
+
+No feature may be claimed as implemented unless ALL are present:
+
+1) Exact function/method names are provided
+2) Function signature or entry point is identified
+3) Inputs are specified
+4) Outputs are specified
+5) A test or execution path is shown (command or runtime path)
+6) Evidence is saved under _proof/ (logs/output), and is non-.md
+
+Unverified claims are treated as incorrect.
+
+================================================================================
+8) Scope Discipline (No Inferred Intent)
+================================================================================
+
+Perform ONLY the requested task.
+Do NOT "helpfully" add features, files, or refactors.
+Do NOT future-proof.
+Do NOT prepare for hypothetical next steps.
+
+No inferred intent execution:
+- If something is ambiguous or out-of-scope, STOP and report the exact finding.
+- Do NOT modify anything outside the stated task scope.
+
+================================================================================
+9) Violation Handling (Factual, Non-Narrative)
+================================================================================
+
+If a rule is violated:
+
+1) Identify the violated rule number(s)
+2) Correct it
+3) Prove correction (logs/commands/output)
+4) Resume only from a stable state
+
+No defensiveness.
+No narrative.
+No philosophy.
+Factual explanation only.
+
+================================================================================
+10) State Lock (Completion Requirements)
+================================================================================
+
+After a successful task, declare:
+
+STATE LOCK:
+- Code builds (proof logged if applicable)
+- Tests pass (if applicable; proof logged)
+- No placeholders
+- No dead code / orphaned work
+- Docs unchanged except permitted docs/ files
+- Working tree is clean
+
+State Lock proof MUST include:
+- git commit hash
+- build output log path (if applicable)
+- test output log path (if applicable)
+- git status clean proof
+
+Any further changes require reopening the state.
+
+================================================================================
+11) Git Integrity Enforcement (Hard Stop)
+================================================================================
+
+Before beginning ANY task execution:
+
+- Working tree MUST be clean.
+- git status --porcelain MUST be empty.
+- No runtime artifacts may be tracked or committed.
+
+If dirty:
+- STOP.
+- Identify the source of dirt (tracked vs untracked).
+- Fix:
+  - restore tracked runtime files
+  - add/repair .gitignore rules for runtime folders
+  - remove untracked runtime folders if safe
+- Prove clean state (saved output).
+
+Runtime folders and session logs MUST NEVER be committed.
+
+================================================================================
+How You Use This (Practically)
+================================================================================
+
+Every task prompt MUST include:
+
+STEP 1:
+Load and comply with the Universal Agent Ruleset.
+
+STEP 2:
+Confirm compliance.
+
+TASK:
+<exact task>
+
+If any required info is missing:
+FAIL:
+Required information missing: <exact item>.
+Cannot proceed.
+
+Add Section: “Document Requirements (Mandatory, Per-Milestone)”
+
+Every milestone must create and populate this folder:
+
+_proof/milestone_<M>/
+
+
+Mandatory proof logs (exact filenames):
+
+01_git_context_<M>.txt
+03_configure_<M>.txt
+04_build_<M>.txt
+05_run_headless_<M>.txt
+06_run_qt_<M>.txt   (if UI exists)
+07_grep_snapshot_pod.txt
+08_precommit_gate.txt
+09_git_publish_<M>.txt
+
+
+Git operations must be included in proof
+
+01_git_context_<M>.txt must contain:
+
+git rev-parse --show-toplevel
+
+git status
+
+git branch --show-current
+
+git log --oneline -n 3 --decorate
+
+09_git_publish_<M>.txt must contain:
+
+git diff --name-only
+
+git add -A
+
+git commit -m "<exact milestone message>"
+
+git push -u origin <branch>
+
+git switch main
+
+git pull --ff-only
+
+git merge --ff-only <branch>
+
+git push origin main
+
+git show --oneline --decorate -1
+
+git show --name-only --oneline -1
+
+Proof must demonstrate PASS markers
+
+Headless log must include required PASS lines (example from V: OfflineRenderTest=PASS and RunResult=PASS). 
+
+05_run_headless_V
+
+Qt log must show QtSmoke=PASS and any milestone-specific UI markers. 
+
+06_run_qt_V
+
+Forbidden tracked outputs
+
+No _proof/, build/, artifacts/ files may ever be committed (must be checked in 08_precommit_gate.txt).
+
+Determinism
+
+Single-run only for headless proof; no retry loops.

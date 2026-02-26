@@ -2,7 +2,7 @@
   "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 23,
+    "minor": 21,
     "patch": 0
   },
   "configurePresets": [
@@ -15,6 +15,16 @@
         "CMAKE_PREFIX_PATH": "C:/Qt/6.10.2/msvc2022_64",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "TRUE"
       }
+    },
+    {
+      "name": "vs2022-x64-release",
+      "displayName": "VS2022 x64 Release (Qt 6.10.2)",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/build-release-2",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.10.2/msvc2022_64",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "TRUE"
+      }
     }
   ],
   "buildPresets": [
@@ -22,6 +32,11 @@
       "name": "vs2022-x64-debug-build",
       "configurePreset": "vs2022-x64-debug",
       "configuration": "Debug"
+    },
+    {
+      "name": "vs2022-x64-release-build",
+      "configurePreset": "vs2022-x64-release",
+      "configuration": "Release"
     }
   ]
 }

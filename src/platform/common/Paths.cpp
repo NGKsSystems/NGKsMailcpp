@@ -29,7 +29,7 @@ std::filesystem::path ArtifactsDir() {
 }
 
 std::filesystem::path AuditLogFilePath() {
-    return ArtifactsDir() / "logs" / "audit.jsonl";
+    return ArtifactsDir() / "audit" / "audit.jsonl";
 }
 
 std::filesystem::path DbFilePath() {
@@ -47,7 +47,12 @@ bool EnsureAppDirectories() {
         return false;
     }
 
-    std::filesystem::create_directories(ArtifactsDir() / "logs", ec);
+    std::filesystem::create_directories(ArtifactsDir() / "audit", ec);
+    if (ec) {
+        return false;
+    }
+
+    std::filesystem::create_directories(ArtifactsDir() / "audit" / "providers", ec);
     if (ec) {
         return false;
     }

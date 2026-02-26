@@ -12,6 +12,9 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QRandomGenerator>
+#include <QSslCertificate>
+#include <QSslKey>
+#include <QSslSocket>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTimer>
@@ -85,7 +88,98 @@ static bool PostForm(QNetworkAccessManager& nam, const QUrl& url, const QUrlQuer
     return true;
 }
 
-static bool WaitForOAuthCode(QTcpServer& server, int timeoutSeconds, QString& outCode, QString& outErr, QFile* proof)
+static QString DefaultCertPath()
+{
+    return "artifacts/certs/localhost.crt.pem";
+}
+
+static QString DefaultKeyPath()
+{
+    return "artifacts/certs/localhost.key.pem";
+}
+
+static QString BuildMissingTlsError(const QString& certPath, const QString& keyPath)
+{
+    return QString(
+        "missing_tls_cert\n"
+        "CERT_PATH=%1\n"
+        "KEY_PATH=%2\n"
+        "openssl req -x509 -newkey rsa:2048 -nodes ^\n"
+        "  -keyout artifacts/certs/localhost.key.pem ^\n"
+        "  -out artifacts/certs/localhost.crt.pem ^\n"
+        "  -days 365 ^\n"
+        "  -subj \"/CN=localhost\"")
+        .arg(certPath, keyPath);
+}
+
+static bool ValidateLoopbackConfig(const OAuthConfig& cfg, QString& outErr)
+{
+    outErr.clear();
+    const QString scheme = cfg.redirectScheme.trimmed().toLower();
+    const QString host = cfg.redirectHost.trimmed().toLower();
+
+    if (cfg.listenUseHttps) {
+        if (scheme != "https") {
+            outErr = "invalid-https-config redirectScheme must be https";
+            return false;
+        }
+        if (host != "localhost") {
+            outErr = "invalid-https-config redirectHost must be localhost";
+            return false;
+        }
+        if (cfg.listenPort <= 0) {
+            outErr = "invalid-https-config listenPort must be fixed and > 0";
+            return false;
+        }
+    }
+
+    if (!cfg.listenUseHttps && scheme != "http") {
+        outErr = "invalid-http-config redirectScheme must be http";
+        return false;
+    }
+
+    if (host.isEmpty()) {
+        outErr = "invalid-redirect-host";
+        return false;
+    }
+    return true;
+}
+
+static QString BuildRedirectUri(const OAuthConfig& cfg, int port)
+{
+    return QString("%1://%2:%3/callback")
+        .arg(cfg.redirectScheme.trimmed().isEmpty() ? "http" : cfg.redirectScheme,
+             cfg.redirectHost.trimmed().isEmpty() ? "127.0.0.1" : cfg.redirectHost)
+        .arg(port);
+}
+
+static bool LoadTlsMaterial(const OAuthConfig& cfg, QSslCertificate& outCert, QSslKey& outKey, QString& outErr)
+{
+    outErr.clear();
+    const QString certPath = cfg.certPath.trimmed().isEmpty() ? DefaultCertPath() : cfg.certPath.trimmed();
+    const QString keyPath = cfg.keyPath.trimmed().isEmpty() ? DefaultKeyPath() : cfg.keyPath.trimmed();
+
+    QFile certFile(certPath);
+    QFile keyFile(keyPath);
+    if (!certFile.exists() || !keyFile.exists()) {
+        outErr = BuildMissingTlsError(certPath, keyPath);
+        return false;
+    }
+    if (!certFile.open(QIODevice::ReadOnly) || !keyFile.open(QIODevice::ReadOnly)) {
+        outErr = BuildMissingTlsError(certPath, keyPath);
+        return false;
+    }
+
+    outCert = QSslCertificate(certFile.readAll(), QSsl::Pem);
+    outKey = QSslKey(keyFile.readAll(), QSsl::Rsa, QSsl::Pem);
+    if (outCert.isNull() || outKey.isNull()) {
+        outErr = BuildMissingTlsError(certPath, keyPath);
+        return false;
+    }
+    return true;
+}
+
+static bool WaitForOAuthCode(const OAuthConfig& cfg, QTcpServer& server, int timeoutSeconds, QString& outCode, QString& outErr, QFile* proof)
 {
     outErr.clear();
     outCode.clear();
@@ -106,21 +200,53 @@ static bool WaitForOAuthCode(QTcpServer& server, int timeoutSeconds, QString& ou
         return false;
     }
 
-    QTcpSocket* sock = server.nextPendingConnection();
-    if (!sock) {
+    QTcpSocket* plainSock = server.nextPendingConnection();
+    if (!plainSock) {
         outErr = "oauth-no-socket";
         return false;
     }
 
-    sock->waitForReadyRead(3000);
-    const QByteArray req = sock->readAll();
+    QTcpSocket* activeSock = plainSock;
+    if (cfg.listenUseHttps) {
+        QSslCertificate cert;
+        QSslKey key;
+        if (!LoadTlsMaterial(cfg, cert, key, outErr)) {
+            if (proof) WriteProofLine(*proof, "ERROR=" + outErr);
+            plainSock->disconnectFromHost();
+            plainSock->deleteLater();
+            return false;
+        }
+
+        auto* sslSock = new QSslSocket();
+        if (!sslSock->setSocketDescriptor(plainSock->socketDescriptor())) {
+            outErr = "oauth-https-socket-descriptor-failed";
+            plainSock->disconnectFromHost();
+            plainSock->deleteLater();
+            sslSock->deleteLater();
+            return false;
+        }
+        plainSock->deleteLater();
+        sslSock->setLocalCertificate(cert);
+        sslSock->setPrivateKey(key);
+        sslSock->startServerEncryption();
+        if (!sslSock->waitForEncrypted(10000)) {
+            outErr = "oauth-https-handshake-failed";
+            sslSock->disconnectFromHost();
+            sslSock->deleteLater();
+            return false;
+        }
+        activeSock = sslSock;
+    }
+
+    activeSock->waitForReadyRead(3000);
+    const QByteArray req = activeSock->readAll();
 
     // Very small HTTP parse: first line "GET /callback?code=... HTTP/1.1"
     const QList<QByteArray> lines = req.split('\n');
     if (lines.isEmpty()) {
         outErr = "oauth-bad-http";
-        sock->disconnectFromHost();
-        sock->deleteLater();
+        activeSock->disconnectFromHost();
+        activeSock->deleteLater();
         return false;
     }
 
@@ -128,8 +254,8 @@ static bool WaitForOAuthCode(QTcpServer& server, int timeoutSeconds, QString& ou
     const QList<QByteArray> parts = first.split(' ');
     if (parts.size() < 2) {
         outErr = "oauth-bad-http-line";
-        sock->disconnectFromHost();
-        sock->deleteLater();
+        activeSock->disconnectFromHost();
+        activeSock->deleteLater();
         return false;
     }
 
@@ -157,10 +283,10 @@ static bool WaitForOAuthCode(QTcpServer& server, int timeoutSeconds, QString& ou
         outCode = code;
     }
 
-    sock->write(resp);
-    sock->flush();
-    sock->disconnectFromHost();
-    sock->deleteLater();
+    activeSock->write(resp);
+    activeSock->flush();
+    activeSock->disconnectFromHost();
+    activeSock->deleteLater();
 
     if (proof) {
         WriteProofLine(*proof, QString("OAUTH_HTTP_FIRSTLINE=%1").arg(QString::fromUtf8(first)));
@@ -189,12 +315,17 @@ bool OAuthBroker::ConnectAndFetchTokens(const OAuthConfig& cfg, OAuthResult& out
     WriteProofLine(proof, "EMAIL=" + cfg.email);
     WriteProofLine(proof, "SCOPE=" + cfg.scope);
 
+    if (!ValidateLoopbackConfig(cfg, outError)) {
+        WriteProofLine(proof, "ERROR=" + outError);
+        return false;
+    }
+
     if (cfg.clientId.trimmed().isEmpty()) {
         outError = "missing-client-id";
         WriteProofLine(proof, "ERROR=missing-client-id");
         return false;
     }
-    if (cfg.clientSecret.trimmed().isEmpty()) {
+    if (cfg.sendClientSecretInCodeExchange && cfg.clientSecret.trimmed().isEmpty()) {
         outError = "missing-client-secret";
         WriteProofLine(proof, "ERROR=missing-client-secret");
         return false;
@@ -208,7 +339,7 @@ bool OAuthBroker::ConnectAndFetchTokens(const OAuthConfig& cfg, OAuthResult& out
         return false;
     }
     const int port = server.serverPort();
-    const QString redirectUri = QString("http://127.0.0.1:%1/callback").arg(port);
+    const QString redirectUri = BuildRedirectUri(cfg, port);
 
     WriteProofLine(proof, "REDIRECT_URI=" + redirectUri);
 
@@ -239,7 +370,7 @@ bool OAuthBroker::ConnectAndFetchTokens(const OAuthConfig& cfg, OAuthResult& out
 
     // Wait for code
     QString code;
-    if (!WaitForOAuthCode(server, cfg.timeoutSeconds, code, outError, &proof)) {
+    if (!WaitForOAuthCode(cfg, server, cfg.timeoutSeconds, code, outError, &proof)) {
         WriteProofLine(proof, "ERROR=" + outError);
         return false;
     }
@@ -249,11 +380,16 @@ bool OAuthBroker::ConnectAndFetchTokens(const OAuthConfig& cfg, OAuthResult& out
     QJsonObject json;
     QUrlQuery form;
     form.addQueryItem("client_id", cfg.clientId);
-    form.addQueryItem("client_secret", cfg.clientSecret);
+    if (cfg.sendClientSecretInCodeExchange && !cfg.clientSecret.trimmed().isEmpty()) {
+        form.addQueryItem("client_secret", cfg.clientSecret);
+    }
     form.addQueryItem("code", code);
     form.addQueryItem("code_verifier", codeVerifier);
     form.addQueryItem("redirect_uri", redirectUri);
     form.addQueryItem("grant_type", "authorization_code");
+    if (cfg.includeScopeInCodeExchange && !cfg.scope.trimmed().isEmpty()) {
+        form.addQueryItem("scope", cfg.scope);
+    }
 
     if (!PostForm(nam, QUrl(cfg.tokenEndpoint), form, json, outError)) {
         WriteProofLine(proof, "ERROR=token-exchange-failed");
@@ -286,6 +422,34 @@ bool OAuthBroker::ConnectAndFetchTokens(const OAuthConfig& cfg, OAuthResult& out
     WriteProofLine(proof, "REFRESH_TOKEN_PRESENT=yes");
     WriteProofLine(proof, "EXPIRES_AT_UTC=" + QString::number(out.expiresAtUtc));
 
+    return true;
+}
+
+bool OAuthBroker::OAuthHttpsSelftest(const OAuthConfig& cfg, QString& outRedirectUri, QString& outError)
+{
+    outRedirectUri.clear();
+    outError.clear();
+
+    if (!ValidateLoopbackConfig(cfg, outError)) {
+        return false;
+    }
+
+    if (cfg.listenUseHttps) {
+        QSslCertificate cert;
+        QSslKey key;
+        if (!LoadTlsMaterial(cfg, cert, key, outError)) {
+            return false;
+        }
+    }
+
+    QTcpServer server;
+    if (!server.listen(QHostAddress::LocalHost, cfg.listenPort <= 0 ? 0 : static_cast<quint16>(cfg.listenPort))) {
+        outError = "oauth-listen-failed";
+        return false;
+    }
+
+    outRedirectUri = BuildRedirectUri(cfg, server.serverPort());
+    server.close();
     return true;
 }
 

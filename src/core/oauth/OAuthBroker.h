@@ -5,15 +5,22 @@
 namespace ngks::core::oauth {
 
 struct OAuthConfig {
-    QString provider;          // "gmail"
+    QString provider;          // provider id
     QString email;             // for storage / display
-    QString clientId;          // from Google Cloud OAuth client (Desktop)
-    QString clientSecret;      // from Google Cloud OAuth client
-    QString authEndpoint;      // https://accounts.google.com/o/oauth2/v2/auth
-    QString tokenEndpoint;     // https://oauth2.googleapis.com/token
-    QString scope;             // https://mail.google.com/
+    QString clientId;          // provider client id
+    QString clientSecret;      // provider client secret
+    QString authEndpoint;      // provider authorize endpoint
+    QString tokenEndpoint;     // provider token endpoint
+    QString scope;             // provider-owned scope string
+    bool sendClientSecretInCodeExchange = true;
+    bool includeScopeInCodeExchange = false;
     int listenPort;            // 0 = auto
     int timeoutSeconds;        // e.g. 180
+    bool listenUseHttps = false;
+    QString redirectScheme = "http";    // "http" or "https"
+    QString redirectHost = "127.0.0.1"; // use "localhost" for https
+    QString certPath;                    // optional; default artifacts/certs/localhost.crt.pem
+    QString keyPath;                     // optional; default artifacts/certs/localhost.key.pem
 };
 
 struct OAuthResult {
@@ -26,6 +33,7 @@ class OAuthBroker {
 public:
     static bool ConnectAndFetchTokens(const OAuthConfig& cfg, OAuthResult& out, QString& outError, QString& outProofPath);
     static bool RefreshAccessToken(const OAuthConfig& cfg, const QString& refreshToken, OAuthResult& out, QString& outError);
+    static bool OAuthHttpsSelftest(const OAuthConfig& cfg, QString& outRedirectUri, QString& outError);
 };
 
 } // namespace ngks::core::oauth

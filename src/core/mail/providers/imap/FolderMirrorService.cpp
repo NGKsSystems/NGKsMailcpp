@@ -16,7 +16,8 @@ bool FolderMirrorService::MirrorResolvedAccount(
     const QString& credentialRef,
     const QVector<ResolvedFolder>& folders,
     int& outAccountId,
-    QString& outError)
+    QString& outError,
+    const QString& providerId)
 {
     outAccountId = -1;
     outError.clear();
@@ -41,7 +42,7 @@ bool FolderMirrorService::MirrorResolvedAccount(
         "tls_mode=excluded.tls_mode, auth_method=excluded.auth_method, credential_ref=excluded.credential_ref, "
         "status='RESOLVED'");
     upsert.bindValue(":email", request.email);
-    upsert.bindValue(":provider", "imap");
+    upsert.bindValue(":provider", providerId.trimmed().isEmpty() ? QString("imap") : providerId.trimmed());
     upsert.bindValue(":host", request.host);
     upsert.bindValue(":port", request.port);
     upsert.bindValue(":tls", request.tls ? "TLS" : "PLAIN");

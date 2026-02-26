@@ -19,7 +19,8 @@ public:
         const QString& credentialRef,
         const QVector<ResolvedFolder>& folders,
         int& outAccountId,
-        QString& outError);
+        QString& outError,
+        const QString& providerId = "imap");
 };
 
 }

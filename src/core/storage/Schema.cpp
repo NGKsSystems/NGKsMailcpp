@@ -8,7 +8,7 @@
 namespace ngks::core::storage {
 
 namespace {
-constexpr int kSchemaVersion = 2;
+constexpr int kSchemaVersion = 3;
 }
 
 Schema::Schema(Db& db)
@@ -33,6 +33,15 @@ bool Schema::Ensure()
 
     if (version < 2) {
         if (!MigrateToV2()) {
+            return false;
+        }
+        if (!SetVersion(2)) {
+            return false;
+        }
+    }
+
+    if (version < 3) {
+        if (!MigrateToV3()) {
             return false;
         }
         if (!SetVersion(kSchemaVersion)) {
@@ -115,6 +124,22 @@ bool Schema::EnsureTables()
         return false;
     }
 
+    if (!query.exec(
+            "CREATE TABLE IF NOT EXISTS basic_credentials ("
+            "  provider TEXT NOT NULL,"
+            "  email TEXT NOT NULL,"
+            "  username TEXT NOT NULL,"
+            "  secret_enc TEXT NOT NULL,"
+            "  created_at TEXT NOT NULL,"
+            "  PRIMARY KEY(provider, email)"
+            ")")) {
+        return false;
+    }
+
+    if (!query.exec("CREATE INDEX IF NOT EXISTS idx_basic_credentials_provider_email ON basic_credentials(provider, email)")) {
+        return false;
+    }
+
     return true;
 }
 
@@ -152,6 +177,11 @@ bool Schema::MigrateToV2()
     if (!query.exec("DROP TABLE IF EXISTS accounts")) {
         return false;
     }
+    return EnsureTables();
+}
+
+bool Schema::MigrateToV3()
+{
     return EnsureTables();
 }
 

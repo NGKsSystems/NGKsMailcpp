@@ -189,9 +189,10 @@ QStringList ImapClient::ReadResponseUntilTag(const QString& tag)
 {
     QStringList lines;
     const QString tagPrefix = tag + ' ';
+    constexpr int kResponseTimeoutMs = 30000;
 
     while (true) {
-        if (!impl_->socket.waitForReadyRead(10000)) {
+        if (!impl_->socket.waitForReadyRead(kResponseTimeoutMs)) {
             impl_->lastSocketErrorCode = static_cast<int>(impl_->socket.error());
             impl_->lastSocketErrorString = impl_->socket.errorString();
             impl_->encryptedReached = impl_->socket.isEncrypted();
@@ -212,6 +213,40 @@ QStringList ImapClient::ReadResponseUntilTag(const QString& tag)
             lines.push_back(line);
 
             if (line.startsWith(tagPrefix, Qt::CaseInsensitive)) {
+                return lines;
+            }
+        }
+    }
+
+    return lines;
+}
+
+QList<QByteArray> ImapClient::ReadResponseUntilTagRaw(const QString& tag)
+{
+    QList<QByteArray> lines;
+    const QByteArray tagPrefix = (tag + ' ').toUtf8();
+    constexpr int kResponseTimeoutMs = 30000;
+
+    while (true) {
+        if (!impl_->socket.waitForReadyRead(kResponseTimeoutMs)) {
+            impl_->lastSocketErrorCode = static_cast<int>(impl_->socket.error());
+            impl_->lastSocketErrorString = impl_->socket.errorString();
+            impl_->encryptedReached = impl_->socket.isEncrypted();
+            impl_->lastError = QStringLiteral("timeout waiting for IMAP response; socket_error=%1; socket_error_string=%2; encrypted=%3")
+                                  .arg(impl_->lastSocketErrorCode)
+                                  .arg(impl_->lastSocketErrorString)
+                                  .arg(impl_->encryptedReached ? "true" : "false");
+            impl_->LogLine("! ", impl_->lastError);
+            break;
+        }
+
+        while (impl_->socket.canReadLine()) {
+            const QByteArray raw = impl_->socket.readLine();
+            const QByteArray trimmed = raw.trimmed();
+            impl_->LogLine("S ", QString::fromUtf8(trimmed));
+            lines.push_back(raw);
+
+            if (trimmed.startsWith(tagPrefix)) {
                 return lines;
             }
         }

@@ -1,129 +1,108 @@
-#include "ui/models/FolderTreeModel.h"
+#include "ui/models/FolderTreeModel.hpp"
 
-#include <QHash>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QVariant>
+#include "ui/models/MailUiService.hpp"
 
 namespace ngks::ui::models {
 
 FolderTreeModel::FolderTreeModel(QObject* parent)
-    : QStandardItemModel(parent)
+    : QAbstractItemModel(parent)
 {
-    setHorizontalHeaderLabels({ "Folders" });
 }
 
-static QStandardItem* MakeItem(const QString& text)
+QModelIndex FolderTreeModel::index(int row, int column, const QModelIndex& parentIndex) const
 {
-    auto* it = new QStandardItem(text);
-    it->setEditable(false);
-    return it;
-}
-
-static QString NormalizeName(const QString& name)
-{
-    QString trimmed = name;
-    if (trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.size() >= 2) {
-        trimmed = trimmed.mid(1, trimmed.size() - 2);
+    if (parentIndex.isValid() || row < 0 || row >= rows_.size() || column != 0) {
+        return QModelIndex();
     }
-    return trimmed;
+    return createIndex(row, column);
+}
+
+QModelIndex FolderTreeModel::parent(const QModelIndex& child) const
+{
+    Q_UNUSED(child);
+    return QModelIndex();
+}
+
+int FolderTreeModel::rowCount(const QModelIndex& parentIndex) const
+{
+    if (parentIndex.isValid()) {
+        return 0;
+    }
+    return rows_.size();
+}
+
+int FolderTreeModel::columnCount(const QModelIndex& parentIndex) const
+{
+    Q_UNUSED(parentIndex);
+    return 1;
+}
+
+QVariant FolderTreeModel::data(const QModelIndex& modelIndex, int role) const
+{
+    if (!modelIndex.isValid() || modelIndex.row() < 0 || modelIndex.row() >= rows_.size()) {
+        return {};
+    }
+
+    const auto& row = rows_[modelIndex.row()];
+    switch (role) {
+    case Qt::DisplayRole:
+        return row.displayName;
+    case AccountIdRole:
+        return row.accountId;
+    case FolderIdRole:
+        return row.folderId;
+    case FolderRoleRole:
+        return row.specialUse;
+    case IsAccountNodeRole:
+        return false;
+    default:
+        return {};
+    }
+}
+
+QVariant FolderTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole && section == 0) {
+        return "Folders";
+    }
+    return {};
+}
+
+void FolderTreeModel::SetService(const std::shared_ptr<IMailUiService>& service)
+{
+    service_ = service;
+}
+
+void FolderTreeModel::SetAccountId(int accountId)
+{
+    accountId_ = accountId;
 }
 
 void FolderTreeModel::Reload()
 {
-    clear();
-    setHorizontalHeaderLabels({ "Folders" });
-    hasResolvedAccounts_ = false;
+    beginResetModel();
+    rows_.clear();
     firstInboxIndex_ = QModelIndex();
-
-    QSqlDatabase db = QSqlDatabase::database(); // default connection
-    if (!db.isValid() || !db.isOpen()) {
-        return;
-    }
-
-    QSqlQuery qa(db);
-    if (!qa.exec("SELECT id, email, provider FROM accounts WHERE status='RESOLVED' ORDER BY id ASC")) {
-        return;
-    }
-
-    while (qa.next()) {
-        hasResolvedAccounts_ = true;
-
-        const int accountId = qa.value(0).toInt();
-        const QString email = qa.value(1).toString();
-        const QString provider = qa.value(2).toString();
-
-        auto* accountItem = MakeItem(QString("%1 (%2)").arg(email, provider));
-        accountItem->setData(accountId, AccountIdRole);
-        accountItem->setData(true, IsAccountNodeRole);
-        invisibleRootItem()->appendRow(accountItem);
-
-        QSqlQuery qf(db);
-        qf.prepare(
-            "SELECT id, remote_name, display_name, delimiter, attrs_json, special_use "
-            "FROM folders WHERE account_id = :aid ORDER BY id ASC");
-        qf.bindValue(":aid", accountId);
-        if (!qf.exec()) {
-            continue;
+    if (service_ && accountId_ > 0) {
+        rows_ = service_->ListFolders(accountId_);
+        for (int i = 0; i < rows_.size(); ++i) {
+            const QString role = rows_[i].specialUse.toLower();
+            const QString name = rows_[i].displayName.toLower();
+            if (role == "\\inbox" || name == "inbox") {
+                firstInboxIndex_ = index(i, 0, {});
+                break;
+            }
         }
-
-        QHash<QString, QStandardItem*> pathIndex;
-
-        while (qf.next()) {
-            const int folderId = qf.value(0).toInt();
-            const QString remoteName = NormalizeName(qf.value(1).toString());
-            const QString displayName = qf.value(2).toString();
-            QString delimiter = qf.value(3).toString();
-            if (delimiter.isEmpty()) {
-                delimiter = "/";
-            }
-            const QString attrsJson = qf.value(4).toString();
-            const QString specialUse = qf.value(5).toString();
-
-            QStringList parts = remoteName.split(delimiter, Qt::SkipEmptyParts);
-            if (parts.isEmpty()) {
-                parts = QStringList{displayName.isEmpty() ? remoteName : displayName};
-            }
-
-            QString currentPath;
-            QStandardItem* parent = accountItem;
-            for (int i = 0; i < parts.size(); ++i) {
-                if (!currentPath.isEmpty()) {
-                    currentPath += delimiter;
-                }
-                currentPath += parts[i];
-
-                QStandardItem* node = pathIndex.value(currentPath, nullptr);
-                if (!node) {
-                    const bool isLeaf = (i == parts.size() - 1);
-                    node = MakeItem(isLeaf && !displayName.isEmpty() ? displayName : parts[i]);
-                    node->setData(accountId, AccountIdRole);
-                    node->setData(isLeaf ? folderId : -1, FolderIdRole);
-                    node->setData(isLeaf ? specialUse.toLower() : QString(), FolderRoleRole);
-                    node->setData(false, IsAccountNodeRole);
-                    if (isLeaf) {
-                        node->setData(remoteName, Qt::ToolTipRole);
-                    }
-                    parent->appendRow(node);
-                    pathIndex.insert(currentPath, node);
-                }
-                parent = node;
-            }
-
-            if (firstInboxIndex_.isValid()) {
-                continue;
-            }
-            if (specialUse.compare("\\inbox", Qt::CaseInsensitive) == 0 || remoteName.compare("INBOX", Qt::CaseInsensitive) == 0) {
-                firstInboxIndex_ = parent->index();
-            }
-            Q_UNUSED(attrsJson);
+        if (!firstInboxIndex_.isValid() && !rows_.isEmpty()) {
+            firstInboxIndex_ = index(0, 0, {});
         }
     }
+    endResetModel();
 }
 
 bool FolderTreeModel::HasResolvedAccounts() const
 {
-    return hasResolvedAccounts_;
+    return !rows_.isEmpty();
 }
 
 QModelIndex FolderTreeModel::FirstInboxIndex() const

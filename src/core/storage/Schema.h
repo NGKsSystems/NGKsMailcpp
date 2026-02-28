@@ -16,6 +16,7 @@ private:
     bool SetVersion(int version);
     bool MigrateToV2();
     bool MigrateToV3();
+    bool MigrateToV4();
 
     Db& db_;
 };

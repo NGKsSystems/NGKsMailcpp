@@ -34,6 +34,7 @@ bool FolderMirrorService::MirrorResolvedAccount(
     }
 
     QSqlQuery upsert(sqlDb);
+    const QString authMethod = request.useXoauth2 ? "XOAUTH2" : "PASSWORD";
     upsert.prepare(
         "INSERT INTO accounts(email, provider, imap_host, imap_port, tls_mode, auth_method, credential_ref, status, sync_state, created_at) "
         "VALUES(:email, :provider, :host, :port, :tls, :auth, :cred, 'RESOLVED', '', datetime('now')) "
@@ -46,7 +47,7 @@ bool FolderMirrorService::MirrorResolvedAccount(
     upsert.bindValue(":host", request.host);
     upsert.bindValue(":port", request.port);
     upsert.bindValue(":tls", request.tls ? "TLS" : "PLAIN");
-    upsert.bindValue(":auth", "PASSWORD");
+    upsert.bindValue(":auth", authMethod);
     upsert.bindValue(":cred", credentialRef);
 
     if (!upsert.exec()) {

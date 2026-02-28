@@ -8,7 +8,7 @@
 namespace ngks::core::storage {
 
 namespace {
-constexpr int kSchemaVersion = 3;
+constexpr int kSchemaVersion = 4;
 }
 
 Schema::Schema(Db& db)
@@ -42,6 +42,15 @@ bool Schema::Ensure()
 
     if (version < 3) {
         if (!MigrateToV3()) {
+            return false;
+        }
+        if (!SetVersion(3)) {
+            return false;
+        }
+    }
+
+    if (version < 4) {
+        if (!MigrateToV4()) {
             return false;
         }
         if (!SetVersion(kSchemaVersion)) {
@@ -140,6 +149,33 @@ bool Schema::EnsureTables()
         return false;
     }
 
+    if (!query.exec(
+            "CREATE TABLE IF NOT EXISTS messages ("
+            "  id INTEGER PRIMARY KEY,"
+            "  account_id INTEGER NOT NULL,"
+            "  folder_id INTEGER NOT NULL,"
+            "  provider TEXT NOT NULL DEFAULT '',"
+            "  remote_uid INTEGER NOT NULL DEFAULT 0,"
+            "  message_id_hdr TEXT NOT NULL DEFAULT '',"
+            "  from_display TEXT NOT NULL DEFAULT '',"
+            "  subject TEXT NOT NULL DEFAULT '',"
+            "  date_utc TEXT NOT NULL DEFAULT '',"
+            "  body_text TEXT NOT NULL DEFAULT '',"
+            "  body_html TEXT NOT NULL DEFAULT '',"
+            "  attachments_json TEXT NOT NULL DEFAULT '[]',"
+            "  is_read INTEGER NOT NULL DEFAULT 0,"
+            "  created_at TEXT NOT NULL DEFAULT (datetime('now'))"
+            ")")) {
+        return false;
+    }
+
+    if (!query.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_folder_uid ON messages(account_id, folder_id, remote_uid)")) {
+        return false;
+    }
+    if (!query.exec("CREATE INDEX IF NOT EXISTS idx_messages_folder_date ON messages(account_id, folder_id, date_utc DESC, id DESC)")) {
+        return false;
+    }
+
     return true;
 }
 
@@ -181,6 +217,11 @@ bool Schema::MigrateToV2()
 }
 
 bool Schema::MigrateToV3()
+{
+    return EnsureTables();
+}
+
+bool Schema::MigrateToV4()
 {
     return EnsureTables();
 }

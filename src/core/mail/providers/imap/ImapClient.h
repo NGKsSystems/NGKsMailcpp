@@ -2,6 +2,8 @@
 
 #include <QString>
 #include <QStringList>
+#include <QList>
+#include <QByteArray>
 #include <memory>
 
 namespace ngks::core::mail::providers::imap {
@@ -26,6 +28,9 @@ public:
 
     // Reads until a tagged response line begins with "<tag> " (inclusive). Logs "S ".
     QStringList ReadResponseUntilTag(const QString& tag);
+
+    // Raw variant that preserves bytes/newlines (required for FETCH BODY[] literals).
+    QList<QByteArray> ReadResponseUntilTagRaw(const QString& tag);
 
     QString ReadGreeting();
 

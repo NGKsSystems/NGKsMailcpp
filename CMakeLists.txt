@@ -37,6 +37,8 @@ set(NGKSMAIL_CORE0_SOURCES
 	src/core/mail/providers/imap/ImapClient.cpp
 	src/core/mail/providers/imap/ImapProvider.cpp
 	src/core/mail/providers/imap/FolderMirrorService.cpp
+	src/core/mail/providers/imap/MessageSyncService.cpp
+	src/core/mail/mime/MimeParser.cpp
 	src/platform/common/Paths.cpp
 )
 
@@ -50,6 +52,8 @@ set(NGKSMAIL_UI0_SOURCES
 	src/ui/models/FolderTreeModel.cpp
 	src/ui/models/MessageListModel.cpp
 	src/ui/models/ThreadModel.cpp
+	src/ui/services/ProductionMailUiService.cpp
+	src/ui/compose/ComposeWindow.cpp
 	src/ui/shell/ComposeWindow.cpp
 	src/ui/shell/MessageList.cpp
 	src/ui/shell/NavigationPane.cpp

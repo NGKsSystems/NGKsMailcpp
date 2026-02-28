@@ -10,6 +10,7 @@
 
 #include "core/mail/providers/imap/FolderMirrorService.h"
 #include "core/mail/providers/imap/ImapProvider.h"
+#include "db/BasicCredentialStore.hpp"
 #include "providers/generic_imap/generic_imap_env.hpp"
 
 namespace ngks::providers::generic_imap {
@@ -286,13 +287,30 @@ ngks::auth::AuthResult BeginConnectImpl(
         return result;
     }
 
+    ngks::db::BasicCredentialRecord cred;
+    cred.providerId = profile.ProviderId();
+    cred.email = effectiveEmail;
+    cred.username = username;
+    cred.secret = password;
+
+    QString credErr;
+    if (!ngks::db::BasicCredentialStore::Upsert(db, cred, credErr)) {
+        if (interactive) {
+            PrintConnectFail("credential-store-failed");
+        }
+        result.detail = QString("%1 credential-store-failed: %2").arg(env::LOG_PREFIX, credErr);
+        result.exitCode = 72;
+        return result;
+    }
+
     ngks::core::mail::providers::imap::FolderMirrorService mirror;
     int accountId = -1;
     QString mirrorError;
+    const QString credentialRef = QString("basic_credentials:%1:%2").arg(profile.ProviderId(), effectiveEmail);
     if (!mirror.MirrorResolvedAccount(
             db,
             request,
-            "GENERIC_IMAP_ENV",
+            credentialRef,
             folders,
             accountId,
             mirrorError,

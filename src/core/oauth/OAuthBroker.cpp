@@ -462,10 +462,6 @@ bool OAuthBroker::RefreshAccessToken(const OAuthConfig& cfg, const QString& refr
         outError = "missing-client-id";
         return false;
     }
-    if (cfg.clientSecret.trimmed().isEmpty()) {
-        outError = "missing-client-secret";
-        return false;
-    }
     if (refreshToken.trimmed().isEmpty()) {
         outError = "missing-refresh-token";
         return false;
@@ -475,7 +471,9 @@ bool OAuthBroker::RefreshAccessToken(const OAuthConfig& cfg, const QString& refr
     QJsonObject json;
     QUrlQuery form;
     form.addQueryItem("client_id", cfg.clientId);
-    form.addQueryItem("client_secret", cfg.clientSecret);
+    if (!cfg.clientSecret.trimmed().isEmpty()) {
+        form.addQueryItem("client_secret", cfg.clientSecret);
+    }
     form.addQueryItem("refresh_token", refreshToken);
     form.addQueryItem("grant_type", "refresh_token");
 

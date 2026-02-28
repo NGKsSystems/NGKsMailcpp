@@ -3,6 +3,8 @@
 #include <QByteArray>
 
 #include "core/auth/OAuthStore.h"
+#include "core/mail/providers/imap/FolderMirrorService.h"
+#include "core/mail/providers/imap/ImapProvider.h"
 #include "core/logging/AuditLog.h"
 #include "core/oauth/OAuthBroker.h"
 #include "db/TokenStore.hpp"
@@ -81,6 +83,38 @@ ngks::auth::AuthResult GmailAuthDriver::BeginConnect(const QString& email)
         result.detail = QString("%1 store-failed: %2").arg(kLogPrefix, storeErr);
         result.brokerProofPath = brokerProofPath;
         result.exitCode = 72;
+        return result;
+    }
+
+    ngks::core::mail::providers::imap::ResolveRequest request;
+    request.email = trimmedEmail;
+    request.host = "imap.gmail.com";
+    request.port = 993;
+    request.tls = true;
+    request.username = trimmedEmail;
+    request.password.clear();
+    request.useXoauth2 = true;
+    request.oauthAccessToken = oauth.accessToken;
+
+    ngks::core::mail::providers::imap::ImapProvider imap;
+    QVector<ngks::core::mail::providers::imap::ResolvedFolder> folders;
+    QString resolveError;
+    QString transcriptPath;
+    if (!imap.ResolveAccount(request, folders, resolveError, transcriptPath)) {
+        result.detail = QString("%1 resolve-failed: %2").arg(kLogPrefix, resolveError);
+        result.brokerProofPath = brokerProofPath;
+        result.exitCode = 73;
+        return result;
+    }
+
+    ngks::core::mail::providers::imap::FolderMirrorService mirror;
+    int accountId = -1;
+    QString mirrorError;
+    const QString credentialRef = QString("oauth_tokens:%1:%2").arg(profile_.ProviderId(), trimmedEmail);
+    if (!mirror.MirrorResolvedAccount(db_, request, credentialRef, folders, accountId, mirrorError, profile_.ProviderId())) {
+        result.detail = QString("%1 db-mirror-failed: %2").arg(kLogPrefix, mirrorError);
+        result.brokerProofPath = brokerProofPath;
+        result.exitCode = 74;
         return result;
     }
 

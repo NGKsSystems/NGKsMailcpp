@@ -1,8 +1,3 @@
 #pragma once
 
-namespace ngks::ui::models {
-class AccountTreeModel {
-public:
-    void Reset();
-};
-}
+#include "ui/models/AccountTreeModel.hpp"

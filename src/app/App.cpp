@@ -18,6 +18,7 @@
 #include "core/logging/AuditLog.h"
 #include "core/mail/providers/imap/FolderMirrorService.h"
 #include "core/mail/providers/imap/ImapProvider.h"
+#include "core/mail/providers/imap/MessageSyncService.h"
 #include "core/oauth/OAuthBroker.h"
 #include "core/storage/Db.h"
 #include "core/storage/Schema.h"
@@ -357,6 +358,7 @@ int App::Run(int argc, char* argv[])
     const QCommandLineOption allowLocalhostOpt("allow-localhost", "Allow localhost/loopback target in resolve-test mode.");
     const QCommandLineOption dbDumpFoldersOpt("db-dump-folders", "Dump folders table to artifacts/_proof/29_db_dump_folders.txt and exit.");
     const QCommandLineOption dbDumpOAuthOpt("db-dump-oauth", "Dump oauth_tokens table to artifacts/_proof/30_db_dump_oauth.txt and exit.");
+    const QCommandLineOption syncNowOpt("sync-now", "Sync messages for all known folders and exit.");
     const QCommandLineOption auditSelftestOpt("audit-selftest", "Emit provider-tagged audit events (gmail/ms_graph) and exit.");
     const QCommandLineOption oauthHttpsSelftestOpt("oauth-https-selftest", "Run OAuth HTTPS loopback listener selftest (Yahoo scaffold) and exit.");
     const QCommandLineOption limitOpt("limit", "Limit for --db-dump-folders rows.", "limit", "200");
@@ -378,6 +380,7 @@ int App::Run(int argc, char* argv[])
     parser.addOption(allowLocalhostOpt);
     parser.addOption(dbDumpFoldersOpt);
     parser.addOption(dbDumpOAuthOpt);
+    parser.addOption(syncNowOpt);
     parser.addOption(auditSelftestOpt);
     parser.addOption(oauthHttpsSelftestOpt);
     parser.addOption(limitOpt);
@@ -398,6 +401,48 @@ int App::Run(int argc, char* argv[])
 
     if (parser.isSet(dbDumpOAuthOpt)) {
         return DumpOAuthToProof(ngks::platform::common::DbFilePath(), limit);
+    }
+
+    if (parser.isSet(syncNowOpt)) {
+        QSqlQuery q(db.Handle());
+        if (!q.exec("SELECT account_id, id FROM folders ORDER BY account_id, id")) {
+            ngks::core::logging::AuditLog::Event(
+                "SYNC_RUN_FAIL",
+                QString("{\"reason\":\"query-folders-failed\",\"detail\":\"%1\"}")
+                    .arg(JsonEscape(q.lastError().text()))
+                    .toStdString());
+            return 75;
+        }
+
+        int okCount = 0;
+        int failCount = 0;
+        while (q.next()) {
+            const int accountId = q.value(0).toInt();
+            const int folderId = q.value(1).toInt();
+            QString syncErr;
+            if (ngks::core::mail::providers::imap::MessageSyncService::SyncFolder(db.Handle(), accountId, folderId, 80, syncErr)) {
+                ++okCount;
+            } else {
+                ++failCount;
+                ngks::core::logging::AuditLog::Event(
+                    "SYNC_FOLDER_FAIL",
+                    QString("{\"account_id\":%1,\"folder_id\":%2,\"reason\":\"%3\"}")
+                        .arg(accountId)
+                        .arg(folderId)
+                        .arg(JsonEscape(syncErr))
+                        .toStdString());
+            }
+        }
+
+        ngks::core::logging::AuditLog::Event(
+            "SYNC_RUN_DONE",
+            QString("{\"ok\":%1,\"fail\":%2}")
+                .arg(okCount)
+                .arg(failCount)
+                .toStdString());
+
+        std::cout << "SYNC_RUN ok=" << okCount << " fail=" << failCount << std::endl;
+        return failCount == 0 ? 0 : 76;
     }
 
     if (parser.isSet(auditSelftestOpt)) {
